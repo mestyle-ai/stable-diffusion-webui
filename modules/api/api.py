@@ -244,6 +244,7 @@ class Api:
         self.add_api_route("/sdapi/v1/scripts", self.get_scripts_list, methods=["GET"], response_model=models.ScriptsList)
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
+        self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -804,3 +805,42 @@ class Api:
         shared.state.server_command = "stop"
         return Response("Stopping.")
 
+    def train_lora(self, req: models.LoraModelTrainingRequest):
+        import tempfile
+        from s3_storage import S3Storage, FileType
+        
+        try:
+            # TODO: Update status in Firebase to be `processing`
+
+            # 1. Upload images to S3
+            for img in req.images:
+                S3Storage.upload(
+                    filename=img.filename,
+                    filetype=FileType.images,
+                    base64image=img.base64content,
+                )
+
+            # 2. Prepare dataset on local
+            tmp_dir = tempfile.TemporaryDirectory()
+            for img in req.images:
+                tmp_file = "/".join([tmp_dir, "dataset", img.filename])
+                with open(tmp_file, "wb") as f:
+                    f.write(base64.b64decode(img.base64content))
+
+            # 2.1 Generate image tags
+            from lora_preparator import LoraDatasetPreparator
+            preparator = LoraDatasetPreparator()
+            preparator.tag_images(image_dir=tmp_dir)
+
+            # 2.2 Train model
+            from lora_trainer import LoraModelTrainer
+            trainer = LoraModelTrainer()
+            trainer.train(model_name=req.model_name, dataset_dir=tmp_dir)
+
+            # 2.3 Store model in S3 bucket
+
+            # TODO: Update status in Firebase to be `done`
+            return models.LoraModelTrainingResponse(status="OK", msg="OK", data={"model": ""})
+        except Exception as e:
+            # TODO: Update status in Firebase to be `failed`
+            return models.LoraModelTrainingResponse(status="ERROR", msg=e, data={})

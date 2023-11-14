@@ -32,3 +32,8 @@ torch
 torchdiffeq
 torchsde
 transformers==4.30.2
+
+albumentations
+fairscale
+toml
+diffusers

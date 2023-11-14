@@ -127,6 +127,21 @@ StableDiffusionImg2ImgProcessingAPI = PydanticModelGenerator(
     ]
 ).generate_model()
 
+class LoraModelTrainingImage(BaseModel):
+    filename: str
+    base64content: str
+
+class LoraModelTrainingRequest(BaseModel):
+    model_name: str
+    user: str
+    images: list[LoraModelTrainingImage]
+    ref_id: str
+
+class LoraModelTrainingResponse(BaseModel):
+    status: str
+    msg: str
+    data: dict
+
 class TextToImageResponse(BaseModel):
     images: list[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
     parameters: dict
