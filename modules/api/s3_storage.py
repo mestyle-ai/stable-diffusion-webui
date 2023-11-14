@@ -18,14 +18,14 @@ class S3Storage:
         pass
 
     @staticmethod
-    def upload(filename: string, filetype: FileType, base64image: string):
+    def upload(filename: string, filetype: FileType, base64content: string):
         """
         Upload based64 encoded content to S3 storage bucket
         """
         s3 = boto3.resource("s3")
         s3path = "/".join([filetype.name, filename])
         obj = s3.Object(BUCKET_NAME, s3path)
-        obj.put(Body=base64.b64decode(base64image))
+        obj.put(Body=base64.b64decode(base64content))
         
         return "s3://{bucket}/{path}".format(bucket=BUCKET_NAME, path=s3path)
 

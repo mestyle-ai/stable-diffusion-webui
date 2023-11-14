@@ -37,3 +37,14 @@ albumentations
 fairscale
 toml
 diffusers
+ftfy
+opencv-python
+einops
+pytorch-lightning
+bitsandbytes
+tensorflow
+voluptuous
+lion_pytorch
+dadaptation
+prodigyopt
+lycoris-lora

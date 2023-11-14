@@ -2,8 +2,7 @@ import os
 import subprocess
 
 ROOT_DIR = "/home/ubuntu"
-# ROOT_DIR = "/Users/apirat/Documents/GitHub/MeStyle"
-KOHYA_DIR = "/".join([ROOT_DIR, "kohya_dataset"])
+KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_dataset")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
 TAG_THRESHOLD = 0.35
 CAPTION_MIN = 10

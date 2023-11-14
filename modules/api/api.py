@@ -817,7 +817,7 @@ class Api:
                 S3Storage.upload(
                     filename=img.filename,
                     filetype=FileType.images,
-                    base64image=img.base64content,
+                    base64content=img.base64content,
                 )
 
             # 2. Prepare dataset on local
@@ -835,9 +835,13 @@ class Api:
             # 2.2 Train model
             from lora_trainer import LoraModelTrainer
             trainer = LoraModelTrainer()
-            trainer.train(model_name=req.model_name, dataset_dir=tmp_dir)
+            model_file = trainer.train(model_name=req.model_name, dataset_dir=tmp_dir)
 
             # 2.3 Store model in S3 bucket
+            # TODO:
+            # S3Storage.upload(
+            #     filetype=FileType.models,
+            # )
 
             # TODO: Update status in Firebase to be `done`
             return models.LoraModelTrainingResponse(status="OK", msg="OK", data={"model": ""})
