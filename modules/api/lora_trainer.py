@@ -421,44 +421,29 @@ class LoraModelTrainer:
         print("\n⭐ Starting trainer...\n")
         
         print("accelerate_config_file:", self.accelerate_config_file)
+        print("dataset_config_file:", self.dataset_config_file)
         print("config_file:", self.config_file)
         os.chdir(self.repo_dir)
-        """
-        accelerate launch --num_cpu_threads_per_process 1 train_network.py \
-            --pretrained_model_name_or_path="/home/ubuntu/lora_training/lora_unique_model/model/content/downloaded_model.safetensors" \
-            --dataset_config="/home/ubuntu/lora_training/lora_unique_model/config/dataset_config.toml" \
-            --output_dir="/home/ubuntu/lora_training/lora_unique_model/output" \
-            --output_name="lora_unique_model" \
-            --save_model_as="safetensors" \
-            --prior_loss_weight="1.0" \
-            --max_train_steps="400" \
-            --learning_rate=1e-4 \
-            --xformers \
-            --mixed_precision="fp16" \
-            --cache_latents \
-            --gradient_checkpointing \
-            --save_every_n_epochs=1 \
-            --network_module="networks.lora"
-        """
+
         subprocess.call([
-            'accelerate',
-            'launch',
-            '--num_cpu_threads_per_process=1',
-            'train_network.py',
-            '--pretrained_model_name_or_path="{}"'.format(self.model_file),
-            '--dataset_config="{}"'.format(self.dataset_config_file),
-            '--output_dir="{}"'.format(self.output_folder),
-            '--output_name="{}"'.format(self.project_name),
-            '--save_model_as="safetensors"',
-            '--prior_loss_weight="1.0"',
-            '--max_train_steps="400"',
-            '--learning_rate=1e-4',
-            '--xformers',
-            '--mixed_precision="fp16"',
-            '--cache_latents',
-            '--gradient_checkpointing',
-            '--save_every_n_epochs=1',
-            '--network_module="networks.lora"'
+            "accelerate",
+            "launch",
+            "--num_cpu_threads_per_process=1",
+            "train_network.py",
+            "--pretrained_model_name_or_path={}".format(self.model_file),
+            "--dataset_config={}".format(self.dataset_config_file),
+            "--output_dir={}".format(self.output_folder),
+            "--output_name={}".format(self.project_name),
+            "--save_model_as=safetensors",
+            "--prior_loss_weight=1.0",
+            "--max_train_steps=400",
+            "--learning_rate=1e-4",
+            "--xformers",
+            "--mixed_precision=fp16",
+            "--cache_latents",
+            "--gradient_checkpointing",
+            "--save_every_n_epochs=1",
+            "--network_module=networks.lora"
         ])
         
         # TODO: Return model file path
