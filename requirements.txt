@@ -48,3 +48,4 @@ lion_pytorch
 dadaptation
 prodigyopt
 lycoris-lora
+xformers

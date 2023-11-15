@@ -4,7 +4,7 @@ import subprocess
 ROOT_DIR = "/home/ubuntu"
 KOHYA_DIR = "/".join([ROOT_DIR, "kohya_trainer"])
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
-COMMIT = "9a67e0df390033a89f17e70df5131393692c2a55"
+COMMIT = "95ae56bd22c285ccb2fe5fca96d92f39842bb99b"
 COLAB = False
 XFORMERS = True
 BETTER_EPOCH_NAMES = True
@@ -88,40 +88,11 @@ class LoraModelTrainer:
         os.chdir(KOHYA_DIR)
         if COMMIT:
            subprocess.call(["git", "reset", "--hard", COMMIT])
-        subprocess.call([
-           "wget",
-           "https://raw.githubusercontent.com/hollowstrawberry/kohya-colab/xformers-fix/requirements.txt",
-           "-q",
-           "-O",
-           "requirements.txt",
-        ])
         os.chdir(ROOT_DIR)
 
 
     def install_dependencies(self):
         self.clone_repo()
-        # TODO: Uncomment for AWS
-        # subprocess.call(["apt", "install", "aria2", "-qq"])
-        # !pip install --upgrade -r requirements.txt
-        if XFORMERS:
-            subprocess.call([
-                "pip",
-                "install",
-                "xformers==0.0.22.post4",
-                "--index-url",
-                "https://download.pytorch.org/whl/cu118",
-            ])
-
-        # # patch kohya for minor stuff
-        if LOAD_TRUNCATED_IMAGES:
-            # TODO:
-            # !sed -i 's/from PIL import Image/from PIL import Image, ImageFile\nImageFile.LOAD_TRUNCATED_IMAGES=True/g' library/train_util.py # fix truncated jpegs error
-            pass
-        if BETTER_EPOCH_NAMES:
-            # TODO:
-            # !sed -i 's/{:06d}/{:02d}/g' library/train_util.py # make epoch names shorter
-            # !sed -i 's/"." + args.save_model_as)/"-{:02d}.".format(num_train_epochs) + args.save_model_as)/g' train_network.py # name of the last epoch will match the rest
-            pass
 
         from accelerate.utils import write_basic_config
         if not os.path.exists(self.accelerate_config_file):
@@ -222,20 +193,20 @@ class LoraModelTrainer:
         real_model_url = self.model_url.strip()
 
         if real_model_url.lower().endswith((".ckpt", ".safetensors")):
-            model_file = f"/content{real_model_url[real_model_url.rfind('/'):]}"
-            model_file = os.path.join(self.model_folder, model_file[1:])
+            self.model_file = f"/content{real_model_url[real_model_url.rfind('/'):]}"
+            self.model_file = os.path.join(self.model_folder, self.model_file[1:])
         else:
-            model_file = "/content/downloaded_model.safetensors"
-            model_file = os.path.join(self.model_folder, model_file[1:])
-            if os.path.exists(model_file):
-                subprocess.call(["rm", "{}".format(model_file)])
+            self.model_file = "/content/downloaded_model.safetensors"
+            self.model_file = os.path.join(self.model_folder, self.model_file[1:])
+            if os.path.exists(self.model_file):
+                subprocess.call(["rm", "{}".format(self.model_file)])
 
         if m := re.search(r"(?:https?://)?(?:www\.)?huggingface\.co/[^/]+/[^/]+/blob", self.model_url):
             real_model_url = real_model_url.replace("blob", "resolve")
         elif m := re.search(r"(?:https?://)?(?:www\.)?civitai\.com/models/([0-9]+)", self.model_url):
             real_model_url = f"https://civitai.com/api/download/models/{m.group(1)}"
 
-        print("DOWNLOAD TO:", model_file)
+        print("DOWNLOAD TO:", self.model_file)
         subprocess.call([
             "aria2c",
             "{}".format(real_model_url),
@@ -250,25 +221,25 @@ class LoraModelTrainer:
             "-d",
             "/",
             "-o",
-            "{}".format(model_file),
+            "{}".format(self.model_file),
         ])
 
-        if model_file.lower().endswith(".safetensors"):
+        if self.model_file.lower().endswith(".safetensors"):
             from safetensors.torch import load_file as load_safetensors
             try:
-                test = load_safetensors(model_file)
+                test = load_safetensors(self.model_file)
                 del test
             except Exception as e:
                 #if "HeaderTooLarge" in str(e):
-                new_model_file = os.path.splitext(model_file)[0]+".ckpt"
-                subprocess.call(["mv", "{}".format(model_file), "{}".format(new_model_file)])
-                model_file = new_model_file
-                print(f"Renamed model to {os.path.splitext(model_file)[0]}.ckpt")
+                new_model_file = os.path.splitext(self.model_file)[0]+".ckpt"
+                subprocess.call(["mv", "{}".format(self.model_file), "{}".format(new_model_file)])
+                self.model_file = new_model_file
+                print(f"Renamed model to {os.path.splitext(self.model_file)[0]}.ckpt")
 
-        if model_file.lower().endswith(".ckpt"):
+        if self.model_file.lower().endswith(".ckpt"):
             from torch import load as load_ckpt
             try:
-                test = load_ckpt(model_file)
+                test = load_ckpt(self.model_file)
                 del test
             except Exception as e:
                 return False
@@ -282,7 +253,7 @@ class LoraModelTrainer:
         config_file = self.config_file
         if self.override_config_file:
             config_file = self.override_config_file
-            print(f"\n⭕ Using custom config file {config_file}")
+            print(f"\n⭕ Using custom config file {self.config_file}")
         else:
             config_dict = {
                 "additional_network_arguments": {
@@ -448,16 +419,46 @@ class LoraModelTrainer:
         self.create_config()
 
         print("\n⭐ Starting trainer...\n")
+        
+        print("accelerate_config_file:", self.accelerate_config_file)
+        print("config_file:", self.config_file)
         os.chdir(self.repo_dir)
-
+        """
+        accelerate launch --num_cpu_threads_per_process 1 train_network.py \
+            --pretrained_model_name_or_path="/home/ubuntu/lora_training/lora_unique_model/model/content/downloaded_model.safetensors" \
+            --dataset_config="/home/ubuntu/lora_training/lora_unique_model/config/dataset_config.toml" \
+            --output_dir="/home/ubuntu/lora_training/lora_unique_model/output" \
+            --output_name="lora_unique_model" \
+            --save_model_as="safetensors" \
+            --prior_loss_weight="1.0" \
+            --max_train_steps="400" \
+            --learning_rate=1e-4 \
+            --xformers \
+            --mixed_precision="fp16" \
+            --cache_latents \
+            --gradient_checkpointing \
+            --save_every_n_epochs=1 \
+            --network_module="networks.lora"
+        """
         subprocess.call([
-            "accelerate",
-            "launch",
-            "--config_file={}".format(self.accelerate_config_file),
-            "--num_cpu_threads_per_process=1",
-            "train_network.py",
-            "--dataset_config={}".format(self.dataset_config_file),
-            "--config_file={}".format(self.config_file),
+            'accelerate',
+            'launch',
+            '--num_cpu_threads_per_process=1',
+            'train_network.py',
+            '--pretrained_model_name_or_path="{}"'.format(self.model_file),
+            '--dataset_config="{}"'.format(self.dataset_config_file),
+            '--output_dir="{}"'.format(self.output_folder),
+            '--output_name="{}"'.format(self.project_name),
+            '--save_model_as="safetensors"',
+            '--prior_loss_weight="1.0"',
+            '--max_train_steps="400"',
+            '--learning_rate=1e-4',
+            '--xformers',
+            '--mixed_precision="fp16"',
+            '--cache_latents',
+            '--gradient_checkpointing',
+            '--save_every_n_epochs=1',
+            '--network_module="networks.lora"'
         ])
         
         # TODO: Return model file path
@@ -465,10 +466,9 @@ class LoraModelTrainer:
 
 
 if __name__ == "__main__":
-    pass
     # Local test
-    # trainer = LoraModelTrainer()
-    # trainer.train(
-    #     model_name="lora_unique_model",
-    #     dataset_dir="/Users/apirat/dataset",
-    # )
+    trainer = LoraModelTrainer()
+    trainer.train(
+        model_name="lora_unique_model",
+        dataset_dir="/home/ubuntu/images",
+    )

@@ -12,7 +12,7 @@ CAPTION_MAX = 75
 class LoraDatasetPreparator:
 
 
-    def __environment_preparation():
+    def __environment_preparation(self):
         os.chdir(ROOT_DIR)
         if not os.path.exists(KOHYA_DIR):
             subprocess.call(["git", "clone", KOHYA_REPO, KOHYA_DIR])
@@ -21,11 +21,11 @@ class LoraDatasetPreparator:
         os.chdir(ROOT_DIR)
 
 
-    def __install_dependencies():
+    def __install_dependencies(self):
         pass
 
 
-    def __generate_tags(images_folder: str):
+    def __generate_tags(self, images_folder: str):
         os.chdir(KOHYA_DIR)
         os.environ["PYTHONPATH"] = KOHYA_DIR
         subprocess.call([
@@ -59,4 +59,5 @@ class LoraDatasetPreparator:
 
 
 if __name__ == "__main__":
-    pass
+    preparator = LoraDatasetPreparator()
+    preparator.tag_images(image_dir="/home/ubuntu/images")
