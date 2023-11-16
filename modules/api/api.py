@@ -817,7 +817,7 @@ class Api:
             '''Update status in Firebase to be `processing`'''
             doc = ds.get_doc(collection="models", key=req.ref_id)
             doc["status"] = "processing"
-            ds.set_doc(collection="models", key=req.ref_id, data=doc):
+            ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
             ''' 1. Upload images to S3'''
             images = []
@@ -862,6 +862,6 @@ class Api:
             '''Update status in Firebase to be `failed`'''
             doc = ds.get_doc(collection="models", key=req.ref_id)
             doc["status"] = "failed"
-            ds.set_doc(collection="models", key=req.ref_id, data=doc):
+            ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
             return models.LoraModelTrainingResponse(status="ERROR", msg=e, data={})
