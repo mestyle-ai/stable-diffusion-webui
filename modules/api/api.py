@@ -818,7 +818,8 @@ class Api:
         try:
             '''Update status in Firebase to be `processing`'''
             doc = ds.get_doc(collection="models", key=req.ref_id)
-            doc["status"] = "processing"
+            if doc is not None:
+                doc["status"] = "processing"
             ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
             ''' 1. Upload images to S3'''
@@ -861,7 +862,8 @@ class Api:
         except Exception as e:
             '''Update status in Firebase to be `failed`'''
             doc = ds.get_doc(collection="models", key=req.ref_id)
-            doc["status"] = "failed"
+            if doc is not None:
+                doc["status"] = "failed"
             ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
             return models.LoraModelTrainingResponse(status="ERROR", msg=e, data={})

@@ -495,8 +495,9 @@ class LoraModelTrainer:
         '''Update status in Firebase to be `done`'''
         ds = DataStore()
         doc = ds.get_doc(collection="models", key=req.ref_id)
-        doc["status"] = "done"
-        doc["modelPath"] = "{}".format(model_s3_path)
+        if doc is not None:
+            doc["status"] = "done"
+            doc["modelPath"] = "{}".format(model_s3_path)
         ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
         return os.path.join(AUTO1111_MODEL_DIR, (self.project_name + ".safetensors"))
