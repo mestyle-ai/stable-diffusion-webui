@@ -1,5 +1,6 @@
 import os
 import subprocess
+from modules.api.firebase_datastore import DataStore
 
 ROOT_DIR = "/home/ubuntu"
 KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_trainer")
@@ -492,8 +493,6 @@ class LoraModelTrainer:
         ])
 
         '''Update status in Firebase to be `done`'''
-        from firebase_datastore import DataStore
-
         ds = DataStore()
         doc = ds.get_doc(collection="models", key=req.ref_id)
         doc["status"] = "done"

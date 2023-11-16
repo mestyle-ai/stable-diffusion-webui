@@ -19,6 +19,10 @@ from secrets import compare_digest
 import modules.shared as shared
 from modules import sd_samplers, deepbooru, sd_hijack, images, scripts, ui, postprocessing, errors, restart, shared_items, script_callbacks, generation_parameters_copypaste, sd_models
 from modules.api import models
+from modules.api.s3_storage import S3Storage
+from modules.api.firebase_datastore import DataStore
+from modules.api.lora_preparator import LoraDatasetPreparator
+from modules.api.lora_trainer import LoraModelTrainer
 from modules.shared import opts
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
 from modules.textual_inversion.textual_inversion import create_embedding, train_embedding
@@ -808,8 +812,6 @@ class Api:
 
     def train_lora(self, req: models.LoraModelTrainingRequest):
         import tempfile
-        from s3_storage import S3Storage, FileType
-        from firebase_datastore import DataStore
 
         ds = DataStore()
         
@@ -839,13 +841,11 @@ class Api:
                     f.write(base64.b64decode(img.base64content))
 
             '''   2.1 Generate image tags'''
-            from lora_preparator import LoraDatasetPreparator
+
             preparator = LoraDatasetPreparator()
             preparator.tag_images(image_dir=tmp_dir)
 
             '''   2.2 Train model and then store on S3'''
-            from lora_trainer import LoraModelTrainer
-
             trainer = LoraModelTrainer()
             x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
             x.start()
