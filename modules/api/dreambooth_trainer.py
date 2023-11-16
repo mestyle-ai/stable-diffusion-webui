@@ -386,7 +386,7 @@ class DreamboothModelTrainer:
         self.output_folder = os.path.join(self.main_dir, "output")
         self.config_folder = os.path.join(self.main_dir, "config")
         self.log_folder = os.path.join(self.main_dir, "log")
-        for dir in (self.main_dir, self.repo_dir, self.model_folder, self.images_folder, self.reg_images_folder, self.output_folder, self.config_folder, self.log_folder):
+        for dir in (self.main_dir, self.repo_dir, self.hugging_face_cache_dir, self.model_folder, self.images_folder, self.reg_images_folder, self.output_folder, self.config_folder, self.log_folder):
             os.makedirs(dir, exist_ok=True)
             
         self.config_file = os.path.join(self.config_folder, "training_config.toml")
@@ -445,9 +445,9 @@ class DreamboothModelTrainer:
             "--prior_loss_weight=1.0",
             "--max_train_steps=400",
             "--learning_rate=1e-4",
-            "--optimizer_type='AdamW8bit'",
+            '--optimizer_type="AdamW8bit"',
             "--xformers",
-            "--mixed_precision='fp16'",
+            '--mixed_precision="fp16"',
             "--cache_latents",
             "--gradient_checkpointing",
             "--save_every_n_epochs=1",
