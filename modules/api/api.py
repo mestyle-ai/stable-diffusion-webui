@@ -23,6 +23,8 @@ from modules.api.s3_storage import S3Storage, FileType
 from modules.api.firebase_datastore import DataStore
 from modules.api.lora_preparator import LoraDatasetPreparator
 from modules.api.lora_trainer import LoraModelTrainer
+from modules.api.dreambooth_preparator import DreamboothDatasetPreparator
+from modules.api.dreambooth_trainer import DreamboothModelTrainer
 from modules.shared import opts
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
 from modules.textual_inversion.textual_inversion import create_embedding, train_embedding
@@ -250,7 +252,7 @@ class Api:
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
         self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
-        self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothTrainingResponse)
+        self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -879,7 +881,7 @@ class Api:
             data={"images": images},
         )
 
-    def train_dreambooth(self, req: models.DreamboothTrainingRequest):
+    def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
         ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
@@ -888,8 +890,13 @@ class Api:
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
+        '''   2.2 Train model and then store on S3'''
+        trainer = DreamboothModelTrainer()
+        x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
+        x.start()
+
         ''' Stage 2: Training on the prepared inputs''' 
-        return models.DreamboothTrainingResponse(
+        return models.DreamboothModelTrainingResponse(
             status="OK",
             msg="OK",
             data={},

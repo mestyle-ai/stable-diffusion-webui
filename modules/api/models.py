@@ -142,13 +142,13 @@ class LoraModelTrainingResponse(BaseModel):
     msg: str
     data: dict
 
-class DreamboothTrainingRequest(BaseModel):
+class DreamboothModelTrainingRequest(BaseModel):
     model_name: str
     user: str
     images: list[TrainingImage]
     ref_id: str
 
-class DreamboothTrainingResponse(BaseModel):
+class DreamboothModelTrainingResponse(BaseModel):
     status: str
     msg: str
     data: dict
