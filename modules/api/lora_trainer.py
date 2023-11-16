@@ -195,10 +195,12 @@ class LoraModelTrainer:
         real_model_url = self.model_url.strip()
 
         if real_model_url.lower().endswith((".ckpt", ".safetensors")):
-            self.model_file = f"/content{real_model_url[real_model_url.rfind('/'):]}"
+            # self.model_file = f"/content{real_model_url[real_model_url.rfind('/'):]}"
+            self.model_file = f"{real_model_url[real_model_url.rfind('/'):]}"
             self.model_file = os.path.join(self.model_folder, self.model_file[1:])
         else:
-            self.model_file = "/content/downloaded_model.safetensors"
+            # self.model_file = "/content/downloaded_model.safetensors"
+            self.model_file = "/downloaded_model.safetensors"
             self.model_file = os.path.join(self.model_folder, self.model_file[1:])
             if os.path.exists(self.model_file):
                 subprocess.call(["rm", "{}".format(self.model_file)])
