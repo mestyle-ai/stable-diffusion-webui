@@ -17,6 +17,7 @@ from fastapi.encoders import jsonable_encoder
 from secrets import compare_digest
 
 import modules.shared as shared
+from modules.paths_internal import script_path
 from modules import sd_samplers, deepbooru, sd_hijack, images, scripts, ui, postprocessing, errors, restart, shared_items, script_callbacks, generation_parameters_copypaste, sd_models
 from modules.api import models
 from modules.api.s3_storage import S3Storage, FileType
@@ -811,18 +812,17 @@ class Api:
         shared.state.server_command = "stop"
         return Response("Stopping.")
 
-    def train_lora(self, req: models.LoraModelTrainingRequest):
+    def record_model_init(self, ref_id: str):
         ds = DataStore()
-        
-        '''Update status in Firebase to be `processing`'''
-        doc = ds.get_doc(collection="models", key=req.ref_id)
+        doc = ds.get_doc(collection="models", key=ref_id)
         if doc is not None:
             doc["status"] = "processing"
-        ds.set_doc(collection="models", key=req.ref_id, data=doc)
+        ds.set_doc(collection="models", key=ref_id, data=doc)
 
-        ''' 1. Upload images to S3'''
+
+    def upload_images(self, images: models.TrainingImage):
         images = []
-        for img in req.images:
+        for img in images:
             s3_url = S3Storage.upload(
                 filename=img.filename,
                 filetype=FileType.images,
@@ -830,14 +830,30 @@ class Api:
             )
             images.append(s3_url)
 
-        ''' 2. Prepare dataset on local'''
-        tmp_dir = "/home/ubuntu/images/{}".format(req.ref_id)
+    def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
+        tmp_dir = os.path.join(script_path, "mestyle/images", model_ref_id)
+        print(tmp_dir)
+        # tmp_dir = "/home/ubuntu/images/{}".format(model_ref_id)
         os.makedirs(tmp_dir, exist_ok=True)
-        for img in req.images:
+        for img in images:
             tmp_file = os.path.join(tmp_dir, img.filename)
             with open(tmp_file, "wb") as f:
                 f.write(base64.b64decode(img.base64content))
+        return tmp_dir
 
+
+    def train_lora(self, req: models.LoraModelTrainingRequest):
+        
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        self.upload_images(req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        ''' Stage 2: Training on the prepared inputs''' 
+        
         '''   2.1 Generate image tags'''
         preparator = LoraDatasetPreparator()
         preparator.tag_images(ref_id=req.ref_id, image_dir=tmp_dir)
@@ -864,6 +880,15 @@ class Api:
         )
 
     def train_dreambooth(self, req: models.DreamboothTrainingRequest):
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        self.upload_images(req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        ''' Stage 2: Training on the prepared inputs''' 
         return models.DreamboothTrainingResponse(
             status="OK",
             msg="OK",

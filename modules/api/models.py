@@ -127,14 +127,14 @@ StableDiffusionImg2ImgProcessingAPI = PydanticModelGenerator(
     ]
 ).generate_model()
 
-class LoraModelTrainingImage(BaseModel):
+class TrainingImage(BaseModel):
     filename: str
     base64content: str
 
 class LoraModelTrainingRequest(BaseModel):
     model_name: str
     user: str
-    images: list[LoraModelTrainingImage]
+    images: list[TrainingImage]
     ref_id: str
 
 class LoraModelTrainingResponse(BaseModel):
@@ -142,14 +142,10 @@ class LoraModelTrainingResponse(BaseModel):
     msg: str
     data: dict
 
-class DreamboothTrainingImage(BaseModel):
-    filename: str
-    base64content: str
-
 class DreamboothTrainingRequest(BaseModel):
     model_name: str
     user: str
-    images: list[DreamboothTrainingImage]
+    images: list[TrainingImage]
     ref_id: str
 
 class DreamboothTrainingResponse(BaseModel):
