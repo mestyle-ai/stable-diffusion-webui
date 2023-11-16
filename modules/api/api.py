@@ -847,7 +847,7 @@ class Api:
         x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
         x.start()
 
-        '''   Single thread processing '''
+        '''   Tested, but timeout - Single thread processing '''
         # print(f"📄 dataset dir: " + tmp_dir)
         # trainer = LoraModelTrainer(ds)
         # model_file = trainer.train(

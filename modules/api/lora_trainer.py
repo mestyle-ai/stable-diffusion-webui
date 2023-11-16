@@ -154,7 +154,7 @@ class LoraModelTrainer:
         print("steps_per_epoch:", steps_per_epoch)
         print("self.train_batch_size:", self.train_batch_size)
         total_steps = self.max_train_steps or int(self.max_train_epochs*steps_per_epoch)
-        print("self.max_train_steps:" self.max_train_steps)
+        print("self.max_train_steps:", self.max_train_steps)
         print("int(self.max_train_epochs*steps_per_epoch):", int(self.max_train_epochs*steps_per_epoch))
         print("total_steps:", total_steps)
         estimated_epochs = int(total_steps/steps_per_epoch)
