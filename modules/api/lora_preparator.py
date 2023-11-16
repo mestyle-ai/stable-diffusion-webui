@@ -55,7 +55,7 @@ class LoraDatasetPreparator:
     def tag_images(self, ref_id: str, image_dir: str):
         self.__environment_preparation()
         self.__install_dependencies()
-        self.__generate_tags(images_folder=image_dir)
+        self.__generate_tags(ref_id=ref_id, images_folder=image_dir)
 
 
 if __name__ == "__main__":
