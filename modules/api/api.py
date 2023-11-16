@@ -839,7 +839,7 @@ class Api:
 
         '''   2.1 Generate image tags'''
         preparator = LoraDatasetPreparator()
-        preparator.tag_images(image_dir=tmp_dir)
+        preparator.tag_images(ref_id=req.ref_id, image_dir=tmp_dir)
 
 
         '''   2.2 Train model and then store on S3'''
