@@ -813,59 +813,50 @@ class Api:
     def train_lora(self, req: models.LoraModelTrainingRequest):
         ds = DataStore()
         
-        try:
-            '''Update status in Firebase to be `processing`'''
-            doc = ds.get_doc(collection="models", key=req.ref_id)
-            if doc is not None:
-                doc["status"] = "processing"
-            ds.set_doc(collection="models", key=req.ref_id, data=doc)
+        '''Update status in Firebase to be `processing`'''
+        doc = ds.get_doc(collection="models", key=req.ref_id)
+        if doc is not None:
+            doc["status"] = "processing"
+        ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
-            ''' 1. Upload images to S3'''
-            images = []
-            for img in req.images:
-                s3_url = S3Storage.upload(
-                    filename=img.filename,
-                    filetype=FileType.images,
-                    base64content=img.base64content,
-                )
-                images.append(s3_url)
-
-            ''' 2. Prepare dataset on local'''
-            # tmp_dir = tempfile.TemporaryDirectory()
-            tmp_dir = "/home/ubuntu/lora_training/{}/images".format(req.ref_id)
-            os.makedirs(tmp_dir, exist_ok=True)
-            for img in req.images:
-                tmp_file = "/".join([tmp_dir, "dataset", img.filename])
-                with open(tmp_file, "wb") as f:
-                    f.write(base64.b64decode(img.base64content))
-
-            '''   2.1 Generate image tags'''
-            preparator = LoraDatasetPreparator()
-            preparator.tag_images(image_dir=tmp_dir)
-
-
-            '''   2.2 Train model and then store on S3'''
-            # trainer = LoraModelTrainer()
-            # x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
-            # x.start()
-
-            # trainer = LoraModelTrainer()
-            # model_file = trainer.train(
-            #     ref_id=req.ref_id,
-            #     model_name=req.model_name,
-            #     dataset_dir=tmp_dir
-            # )
-
-            return models.LoraModelTrainingResponse(
-                status="OK",
-                msg="OK",
-                data={"images": images},
+        ''' 1. Upload images to S3'''
+        images = []
+        for img in req.images:
+            s3_url = S3Storage.upload(
+                filename=img.filename,
+                filetype=FileType.images,
+                base64content=img.base64content,
             )
-        except Exception as e:
-            '''Update status in Firebase to be `failed`'''
-            doc = ds.get_doc(collection="models", key=req.ref_id)
-            if doc is not None:
-                doc["status"] = "failed"
-            ds.set_doc(collection="models", key=req.ref_id, data=doc)
+            images.append(s3_url)
 
-            return models.LoraModelTrainingResponse(status="ERROR", msg=e, data={})
+        ''' 2. Prepare dataset on local'''
+        # tmp_dir = tempfile.TemporaryDirectory()
+        # tmp_dir = "/home/ubuntu/lora_training/{}/images".format(req.ref_id)
+        # os.makedirs(tmp_dir, exist_ok=True)
+        # for img in req.images:
+        #     tmp_file = "/".join([tmp_dir, "dataset", img.filename])
+        #     with open(tmp_file, "wb") as f:
+        #         f.write(base64.b64decode(img.base64content))
+
+        # '''   2.1 Generate image tags'''
+        # preparator = LoraDatasetPreparator()
+        # preparator.tag_images(image_dir=tmp_dir)
+
+
+        '''   2.2 Train model and then store on S3'''
+        # trainer = LoraModelTrainer()
+        # x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
+        # x.start()
+
+        # trainer = LoraModelTrainer()
+        # model_file = trainer.train(
+        #     ref_id=req.ref_id,
+        #     model_name=req.model_name,
+        #     dataset_dir=tmp_dir
+        # )
+
+        return models.LoraModelTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )

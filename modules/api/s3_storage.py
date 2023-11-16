@@ -1,6 +1,5 @@
 import base64
 import boto3
-import string
 import tempfile
 import uuid
 from enum import Enum
@@ -18,7 +17,7 @@ class S3Storage:
         pass
 
     @staticmethod
-    def upload(filename: string, filetype: FileType, base64content: string):
+    def upload(filename: str, filetype: FileType, base64content: str):
         """
         Upload based64 encoded content to S3 storage bucket
         """
@@ -30,7 +29,7 @@ class S3Storage:
         return "s3://{bucket}/{path}".format(bucket=BUCKET_NAME, path=s3path)
 
     @staticmethod
-    def download(s3path: string):
+    def download(s3path: str):
         """
         Download object from S3 bucket to local machine
         """
