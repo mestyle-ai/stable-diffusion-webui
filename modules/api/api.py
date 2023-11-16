@@ -843,10 +843,11 @@ class Api:
 
 
         '''   2.2 Train model and then store on S3'''
-        # trainer = LoraModelTrainer()
-        # x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
-        # x.start()
+        trainer = LoraModelTrainer()
+        x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
+        x.start()
 
+        '''   Single thread processing '''
         # trainer = LoraModelTrainer()
         # model_file = trainer.train(
         #     ref_id=req.ref_id,
