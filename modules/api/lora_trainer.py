@@ -454,8 +454,8 @@ class LoraModelTrainer:
         '''Once completed, copy Lora model to the folder'''
         model_file_name = "{}.safetensors".format(self.project_name)
         lora_model_file = os.path.join(self.output_folder, model_file_name)
-        print(f"📄 Lora model file: {}".format(lora_model_file))
-        print(f"📄 Automatic1111 model directory: {}".format(AUTO1111_MODEL_DIR))
+        print(f"📄 Lora model file: " + lora_model_file)
+        print(f"📄 Automatic1111 model directory: " + AUTO1111_MODEL_DIR)
         if os.path.exists(lora_model_file):
             print(f"🔄 Saving Lora model to automatic1111...")
             subprocess.call([
