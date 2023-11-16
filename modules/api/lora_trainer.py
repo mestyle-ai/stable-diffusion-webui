@@ -455,7 +455,7 @@ class LoraModelTrainer:
             "--network_module=networks.lora"
         ])
 
-        # Once completed, copy Lora model to the folder
+        '''Once completed, copy Lora model to the folder'''
         lora_model_file = os.path.join(self.output_folder, (self.project_name + ".safetensors"))
         if os.path.exists(lora_model_file):
             subprocess.call([
@@ -466,7 +466,12 @@ class LoraModelTrainer:
         else:
             print(f"⭕Error: Lora model not found in output folder.")
         
-        # TODO: Clean up training environment
+        '''Clean up training environment'''
+        subprocess.call([
+            "rm",
+            "-rf",
+            "{}".format(os.path.join(ROOT_DIR, "lora_training", self.project_name))
+        ])
 
         return os.path.join(AUTO1111_MODEL_DIR, (self.project_name + ".safetensors"))
 
