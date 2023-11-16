@@ -378,14 +378,13 @@ class LoraModelTrainer:
 
         '''Prepare folders structure'''
         self.main_dir = os.path.join(ROOT_DIR, "lora_training", model_name)
-        self.deps_dir = os.path.join(ROOT_DIR, "deps")
         self.repo_dir = KOHYA_DIR
         self.model_folder = os.path.join(self.main_dir, "model")
         self.images_folder = os.path.join(self.main_dir, "datasets")
         self.output_folder = os.path.join(self.main_dir, "output")
         self.config_folder = os.path.join(self.main_dir, "config")
         self.log_folder = os.path.join(self.main_dir, "log")
-        for dir in (self.main_dir, self.deps_dir, self.repo_dir, self.images_folder, self.output_folder, self.config_folder, self.log_folder):
+        for dir in (self.main_dir, self.repo_dir, self.images_folder, self.output_folder, self.config_folder, self.log_folder):
             os.makedirs(dir, exist_ok=True)
             
         self.config_file = os.path.join(self.config_folder, "training_config.toml")
@@ -453,15 +452,21 @@ class LoraModelTrainer:
         ])
 
         '''Once completed, copy Lora model to the folder'''
-        lora_model_file = os.path.join(self.output_folder, (self.project_name + ".safetensors"))
+        model_file_name = "{}.safetensors".format(self.project_name)
+        lora_model_file = os.path.join(self.output_folder, model_file_name)
+        print(f"📄 Lora model file: {}".format(lora_model_file))
+        print(f"📄 Automatic1111 model directory: {}".format(AUTO1111_MODEL_DIR))
         if os.path.exists(lora_model_file):
+            print(f"🔄 Saving Lora model to automatic1111...")
             subprocess.call([
                 "cp",
                 "{}".format(lora_model_file),
                 "{}".format(AUTO1111_MODEL_DIR),
             ])
-        else:
-            print(f"⭕Error: Lora model not found in output folder.")
+            print(f"✅ Saved.")
+
+        if not os.path.exists(os.path.join(AUTO1111_MODEL_DIR, model_file_name))
+            print(f"⭕ Error: Lora model not found in output folder.")
         
         '''Clean up training environment'''
         subprocess.call([
