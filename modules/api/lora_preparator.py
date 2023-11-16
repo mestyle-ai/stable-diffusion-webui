@@ -25,7 +25,7 @@ class LoraDatasetPreparator:
         pass
 
 
-    def __generate_tags(self, images_folder: str):
+    def __generate_tags(self, ref_id: str, images_folder: str):
         os.chdir(KOHYA_DIR)
         os.environ["PYTHONPATH"] = KOHYA_DIR
         subprocess.call([
@@ -52,7 +52,7 @@ class LoraDatasetPreparator:
         print("".join(sample))
 
 
-    def tag_images(self, image_dir: str):
+    def tag_images(self, ref_id: str, image_dir: str):
         self.__environment_preparation()
         self.__install_dependencies()
         self.__generate_tags(images_folder=image_dir)
@@ -60,4 +60,7 @@ class LoraDatasetPreparator:
 
 if __name__ == "__main__":
     preparator = LoraDatasetPreparator()
-    preparator.tag_images(image_dir="/home/ubuntu/images")
+    preparator.tag_images(
+        ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
+        image_dir="/home/ubuntu/images",
+    )
