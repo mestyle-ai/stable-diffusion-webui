@@ -143,8 +143,12 @@ class LoraModelTrainer:
             return
 
         pre_steps_per_epoch = sum(img*rep for (img, rep) in images_repeats.values())
+        print("pre_steps_per_epoch:", pre_steps_per_epoch)
         steps_per_epoch = pre_steps_per_epoch/self.train_batch_size
+        print("steps_per_epoch:", steps_per_epoch)
+        print("self.train_batch_size:", self.train_batch_size)
         total_steps = self.max_train_steps or int(self.max_train_epochs*steps_per_epoch)
+        print("total_steps:", total_steps)
         estimated_epochs = int(total_steps/steps_per_epoch)
         lr_warmup_steps = int(total_steps* self.lr_warmup_ratio)
 
