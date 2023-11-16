@@ -77,6 +77,7 @@ class DreamboothModelTrainer:
     main_dir = ""
     deps_dir = ""
     repo_dir = ""
+    hugging_face_cache_dir = ""
     images_folder = ""
     output_folder = ""
     config_folder = ""
@@ -377,6 +378,7 @@ class DreamboothModelTrainer:
         '''Prepare folders structure'''
         self.main_dir = os.path.join(ROOT_DIR, WORK_FOLDER, ref_id)
         self.repo_dir = WORK_DIR
+        self.hugging_face_cache_dir = os.path.join(self.main_dir, "cache")
         self.model_folder = os.path.join(self.main_dir, "model")
         self.images_folder = os.path.join(self.main_dir, "datasets/img")
         # TODO: Generate regularization images from a model.
@@ -430,7 +432,7 @@ class DreamboothModelTrainer:
             "{}:/work".format(self.main_dir),
             "-v", 
             ###
-            "./cache/huggingface/hub:/home/user/.cache/huggingface/hub",
+            "{}:/home/user/.cache/huggingface/hub".format(self.hugging_face_cache_dir),
             "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
             "train_network.py"
