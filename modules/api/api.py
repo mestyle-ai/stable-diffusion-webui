@@ -250,6 +250,7 @@ class Api:
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
         self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
+        self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -860,4 +861,11 @@ class Api:
             status="OK",
             msg="OK",
             data={"images": images},
+        )
+
+    def train_dreambooth(self, req: models.DreamboothTrainingRequest):
+        return models.DreamboothTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={},
         )

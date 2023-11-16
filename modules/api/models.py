@@ -142,6 +142,21 @@ class LoraModelTrainingResponse(BaseModel):
     msg: str
     data: dict
 
+class DreamboothTrainingImage(BaseModel):
+    filename: str
+    base64content: str
+
+class DreamboothTrainingRequest(BaseModel):
+    model_name: str
+    user: str
+    images: list[DreamboothTrainingImage]
+    ref_id: str
+
+class DreamboothTrainingResponse(BaseModel):
+    status: str
+    msg: str
+    data: dict
+
 class TextToImageResponse(BaseModel):
     images: list[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
     parameters: dict
