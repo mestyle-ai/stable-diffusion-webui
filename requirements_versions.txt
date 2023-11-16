@@ -44,3 +44,5 @@ lion_pytorch==0.1.2
 tensorflow==2.14.0
 pytorch_lightning==1.9.4
 xformers==0.0.20
+boto3==1.29.1
+firebase-admin==6.2.0

@@ -49,3 +49,5 @@ dadaptation
 prodigyopt
 lycoris-lora
 xformers
+boto3
+firebase-admin

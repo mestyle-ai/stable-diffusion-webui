@@ -4,7 +4,7 @@ from modules.api.firebase_datastore import DataStore
 
 ROOT_DIR = "/home/ubuntu"
 KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_trainer")
-AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Stable-diffusion")
+AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Lora")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
 COMMIT = "95ae56bd22c285ccb2fe5fca96d92f39842bb99b"
 COLAB = False
@@ -86,6 +86,12 @@ class LoraModelTrainer:
     dataset_config_file = ""
     accelerate_config_file = ""
 
+    datastore = None
+
+    def __init__(self, datastore):
+        self.datastore = datastore
+
+
     def clone_repo(self):
         os.chdir(ROOT_DIR)
         subprocess.call(["git", "clone", KOHYA_REPO, KOHYA_DIR])
@@ -110,6 +116,9 @@ class LoraModelTrainer:
 
     def validate_dataset(self):
         import toml
+        import time
+
+        time.sleep(2)
         supported_types = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
         print("\n💿 Checking dataset...")
 
@@ -143,8 +152,14 @@ class LoraModelTrainer:
             return
 
         pre_steps_per_epoch = sum(img*rep for (img, rep) in images_repeats.values())
+        print("pre_steps_per_epoch:", pre_steps_per_epoch)
         steps_per_epoch = pre_steps_per_epoch/self.train_batch_size
+        print("steps_per_epoch:", steps_per_epoch)
+        print("self.train_batch_size:", self.train_batch_size)
         total_steps = self.max_train_steps or int(self.max_train_epochs*steps_per_epoch)
+        print("self.max_train_steps:", self.max_train_steps)
+        print("int(self.max_train_epochs*steps_per_epoch):", int(self.max_train_epochs*steps_per_epoch))
+        print("total_steps:", total_steps)
         estimated_epochs = int(total_steps/steps_per_epoch)
         lr_warmup_steps = int(total_steps* self.lr_warmup_ratio)
 
@@ -493,20 +508,22 @@ class LoraModelTrainer:
         ])
 
         '''Update status in Firebase to be `done`'''
-        ds = DataStore()
-        doc = ds.get_doc(collection="models", key=req.ref_id)
-        doc["status"] = "done"
-        doc["modelPath"] = "{}".format(model_s3_path)
-        ds.set_doc(collection="models", key=req.ref_id, data=doc)
+        doc = self.datastore.get_doc(collection="models", key=ref_id)
+        if doc is not None:
+            doc["status"] = "done"
+            doc["modelPath"] = "{}".format(model_s3_path)
+        self.datastore.set_doc(collection="models", key=ref_id, data=doc)
 
         return os.path.join(AUTO1111_MODEL_DIR, (self.project_name + ".safetensors"))
 
 
 if __name__ == "__main__":
-    # Local test
-    trainer = LoraModelTrainer()
-    trainer.train(
-        ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
-        model_name="lora_unique_model",
-        dataset_dir="/home/ubuntu/images",
-    )
+    pass
+    ''' Local test '''
+    # datastore = DataStore()
+    # trainer = LoraModelTrainer(datastore)
+    # trainer.train(
+    #     ref_id="00000000-0000-0000-0000-000000000000",
+    #     model_name="mestyle-first-model",
+    #     dataset_dir="/home/ubuntu/images/00000000-0000-0000-0000-000000000000",
+    # )
