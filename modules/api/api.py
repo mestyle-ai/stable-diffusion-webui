@@ -17,7 +17,6 @@ from fastapi.encoders import jsonable_encoder
 from secrets import compare_digest
 
 import modules.shared as shared
-from modules.paths_internal import script_path
 from modules import sd_samplers, deepbooru, sd_hijack, images, scripts, ui, postprocessing, errors, restart, shared_items, script_callbacks, generation_parameters_copypaste, sd_models
 from modules.api import models
 from modules.api.s3_storage import S3Storage, FileType
@@ -831,7 +830,8 @@ class Api:
             images.append(s3_url)
 
     def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
-        tmp_dir = os.path.join(script_path, "mestyle/images", model_ref_id)
+        home_dir = os.path.expanduser('~')
+        tmp_dir = os.path.join(home_dir, "images", model_ref_id)
         print(tmp_dir)
         # tmp_dir = "/home/ubuntu/images/{}".format(model_ref_id)
         os.makedirs(tmp_dir, exist_ok=True)
@@ -860,7 +860,7 @@ class Api:
 
 
         '''   2.2 Train model and then store on S3'''
-        trainer = LoraModelTrainer(ds)
+        trainer = LoraModelTrainer()
         x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
         x.start()
 

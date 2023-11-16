@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-ROOT_DIR = "/home/ubuntu"
+ROOT_DIR = os.path.expanduser('~')
 KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_dataset")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
 TAG_THRESHOLD = 0.35
@@ -62,5 +62,5 @@ if __name__ == "__main__":
     preparator = LoraDatasetPreparator()
     preparator.tag_images(
         ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
-        image_dir="/home/ubuntu/images",
+        image_dir=os.path.join(os.path.expanduser('~'), 'images'),
     )

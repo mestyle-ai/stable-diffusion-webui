@@ -1,3 +1,4 @@
+import os
 import firebase_admin
 import uuid
 from firebase_admin import firestore
@@ -5,7 +6,7 @@ from firebase_admin import credentials
 
 # CRED_JSON_FILE = "/home/ubuntu/.firebase/mestyle-cred.json"
 # CRED_JSON_FILE = "/Users/apirat/.firebase/mestyle-cred.json"
-CRED_JSON_FILE = "/Users/atw/.firebase/mestyle-cred.json"
+CRED_JSON_FILE =  os.path.join(os.path.expanduser('~'), '.firebase/mestyle-cred.json')
 
 class DataStore:
 
