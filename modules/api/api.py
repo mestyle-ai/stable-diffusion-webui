@@ -811,8 +811,6 @@ class Api:
         return Response("Stopping.")
 
     def train_lora(self, req: models.LoraModelTrainingRequest):
-        import tempfile
-
         ds = DataStore()
         
         try:
@@ -842,23 +840,27 @@ class Api:
                     f.write(base64.b64decode(img.base64content))
 
             '''   2.1 Generate image tags'''
-
             preparator = LoraDatasetPreparator()
             preparator.tag_images(image_dir=tmp_dir)
 
+
             '''   2.2 Train model and then store on S3'''
-            trainer = LoraModelTrainer()
-            x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
-            x.start()
+            # trainer = LoraModelTrainer()
+            # x = threading.Thread(target=trainer.train(), args=(req.ref_id, req.model_name, tmp_dir))
+            # x.start()
 
-            trainer = LoraModelTrainer()
-            model_file = trainer.train(
-                ref_id=req.ref_id,
-                model_name=req.model_name,
-                dataset_dir=tmp_dir
+            # trainer = LoraModelTrainer()
+            # model_file = trainer.train(
+            #     ref_id=req.ref_id,
+            #     model_name=req.model_name,
+            #     dataset_dir=tmp_dir
+            # )
+
+            return models.LoraModelTrainingResponse(
+                status="OK",
+                msg="OK",
+                data={"images": images},
             )
-
-            return models.LoraModelTrainingResponse(status="OK", msg="OK", data={"model": ""})
         except Exception as e:
             '''Update status in Firebase to be `failed`'''
             doc = ds.get_doc(collection="models", key=req.ref_id)
