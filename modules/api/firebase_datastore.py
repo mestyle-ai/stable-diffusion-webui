@@ -8,13 +8,15 @@ CRED_JSON_FILE = "/home/ubuntu/.firebase/mestyle-cred.json"
 class DataStore:
 
     db = None
+    app = None
 
     """
     Initializze firebase object
     """
     def __init__(self):
         cred = credentials.Certificate(CRED_JSON_FILE)
-        app = firebase_admin.initialize_app(cred)
+        if self.app is None:
+            self.app = firebase_admin.initialize_app(cred)
         self.db = firestore.client()
 
     """
