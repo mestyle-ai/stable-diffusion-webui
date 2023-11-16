@@ -445,9 +445,9 @@ class DreamboothModelTrainer:
             "--prior_loss_weight=1.0",
             "--max_train_steps=400",
             "--learning_rate=1e-4",
-            '--optimizer_type="AdamW8bit"',
+            '--optimizer_type=AdamW8bit',
             "--xformers",
-            '--mixed_precision="fp16"',
+            '--mixed_precision=fp16',
             "--cache_latents",
             "--gradient_checkpointing",
             "--save_every_n_epochs=1",
@@ -480,7 +480,7 @@ class DreamboothModelTrainer:
                 "aws",
                 "s3",
                 "cp",
-                "{}".format(lora_model_file),
+                "{}".format(trained_model_file),
                 "{}".format(model_s3_path),
             ])
 
