@@ -19,7 +19,7 @@ from secrets import compare_digest
 import modules.shared as shared
 from modules import sd_samplers, deepbooru, sd_hijack, images, scripts, ui, postprocessing, errors, restart, shared_items, script_callbacks, generation_parameters_copypaste, sd_models
 from modules.api import models
-from modules.api.s3_storage import S3Storage
+from modules.api.s3_storage import S3Storage, FileType
 from modules.api.firebase_datastore import DataStore
 from modules.api.lora_preparator import LoraDatasetPreparator
 from modules.api.lora_trainer import LoraModelTrainer
