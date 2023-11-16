@@ -1,4 +1,5 @@
 import firebase_admin
+import uuid
 from firebase_admin import firestore
 from firebase_admin import credentials
 
@@ -15,8 +16,7 @@ class DataStore:
     """
     def __init__(self):
         cred = credentials.Certificate(CRED_JSON_FILE)
-        if self.app is None:
-            self.app = firebase_admin.initialize_app(cred)
+        self.app = firebase_admin.initialize_app(cred, name=str(uuid.uuid4()))
         self.db = firestore.client()
 
     """
