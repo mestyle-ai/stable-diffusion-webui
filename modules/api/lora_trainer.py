@@ -429,9 +429,6 @@ class LoraModelTrainer:
 
         print("\n⭐ Starting trainer...\n")
         
-        print("accelerate_config_file:", self.accelerate_config_file)
-        print("dataset_config_file:", self.dataset_config_file)
-        print("config_file:", self.config_file)
         os.chdir(self.repo_dir)
 
         subprocess.call([
