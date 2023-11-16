@@ -507,7 +507,7 @@ if __name__ == "__main__":
     # Local test
     trainer = LoraModelTrainer()
     trainer.train(
-        ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
-        model_name="lora_unique_model",
-        dataset_dir="/home/ubuntu/images",
+        ref_id="00000000-0000-0000-0000-000000000000",
+        model_name="mestyle-first-model",
+        dataset_dir="/home/ubuntu/images/00000000-0000-0000-0000-000000000000/images",
     )
