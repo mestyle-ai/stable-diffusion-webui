@@ -116,6 +116,9 @@ class LoraModelTrainer:
 
     def validate_dataset(self):
         import toml
+        import time
+
+        time.sleep(2)
         supported_types = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
         print("\n💿 Checking dataset...")
 
