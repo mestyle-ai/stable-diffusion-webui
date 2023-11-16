@@ -2,7 +2,8 @@ import os
 import subprocess
 
 ROOT_DIR = "/home/ubuntu"
-KOHYA_DIR = "/".join([ROOT_DIR, "kohya_trainer"])
+KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_trainer")
+AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Stable-diffusion")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
 COMMIT = "95ae56bd22c285ccb2fe5fca96d92f39842bb99b"
 COLAB = False
@@ -29,6 +30,7 @@ class LoraModelTrainer:
     old_model_url = ""
     # Model: realspice (https://civitai.com/models/158734/realspice)
     model_url = "https://civitai.com/api/download/models/208629?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+    base_model_file = os.path.join(ROOT_DIR, "base_models/v1-5-pruned-emaonly.safetensors")
     custom_model_is_based_on_sd2 = False
     
     dependencies_installed = False
@@ -208,6 +210,12 @@ class LoraModelTrainer:
 
         print("DOWNLOAD TO:", self.model_file)
         subprocess.call([
+            "cp",
+            "{}".format(self.base_model_file),
+            "{}".format(self.model_file),
+        ])
+        '''
+        subprocess.call([
             "aria2c",
             "{}".format(real_model_url),
             "--console-log-level=warn",
@@ -223,6 +231,7 @@ class LoraModelTrainer:
             "-o",
             "{}".format(self.model_file),
         ])
+        '''
 
         if self.model_file.lower().endswith(".safetensors"):
             from safetensors.torch import load_file as load_safetensors
@@ -445,9 +454,21 @@ class LoraModelTrainer:
             "--save_every_n_epochs=1",
             "--network_module=networks.lora"
         ])
+
+        # Once completed, copy Lora model to the folder
+        lora_model_file = os.path.join(self.output_folder, (self.project_name + ".safetensors"))
+        if os.path.exists(lora_model_file):
+            subprocess.call([
+                "cp",
+                "{}".format(lora_model_file),
+                "{}".format(AUTO1111_MODEL_DIR),
+            ])
+        else:
+            print(f"⭕Error: Lora model not found in output folder.")
         
-        # TODO: Return model file path
-        return True
+        # TODO: Clean up training environment
+
+        return os.path.join(AUTO1111_MODEL_DIR, (self.project_name + ".safetensors"))
 
 
 if __name__ == "__main__":
