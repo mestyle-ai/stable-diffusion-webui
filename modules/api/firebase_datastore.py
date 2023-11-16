@@ -2,8 +2,8 @@ import firebase_admin
 from firebase_admin import firestore
 from firebase_admin import credentials
 
-# CRED_JSON_FILE = credentials.Certificate('/home/ubuntu/.firebase/mestyle-cred.json')
-CRED_JSON_FILE = "/Users/apirat/.firebase/mestyle-cred.json"
+CRED_JSON_FILE = "/home/ubuntu/.firebase/mestyle-cred.json"
+# CRED_JSON_FILE = "/Users/apirat/.firebase/mestyle-cred.json"
 
 class DataStore:
 
@@ -26,7 +26,9 @@ class DataStore:
         
         return doc.to_dict()
 
-
+    """
+    Store document into Firebase datastore
+    """
     def set_doc(self, collection: str, key: str, data: dict):
         ref = self.db.collection(collection)
         doc = ref.document(key)
@@ -36,6 +38,7 @@ class DataStore:
 
 
 if __name__ == "__main__":
+    pass
     # ds = DataStore()
     # doc = ds.get_doc(collection="models", key="134c8678-fdd6-4109-878d-5d44140c8bc3")
     # print(doc)

@@ -10,6 +10,7 @@ COLAB = False
 XFORMERS = True
 BETTER_EPOCH_NAMES = True
 LOAD_TRUNCATED_IMAGES = True
+BUCKET_NAME = "mestyle-app"
 
 
 class LoraModelTrainer:
@@ -373,13 +374,13 @@ class LoraModelTrainer:
         print(f"📄 Dataset config saved to {dataset_config_file}")
 
 
-    def train(self, model_name: str, dataset_dir: str):
+    def train(self, ref_id: str, model_name: str, dataset_dir: str):
         from time import time
         
         self.project_name = model_name
 
         '''Prepare folders structure'''
-        self.main_dir = os.path.join(ROOT_DIR, "lora_training", model_name)
+        self.main_dir = os.path.join(ROOT_DIR, "lora_training", ref_id)
         self.repo_dir = KOHYA_DIR
         self.model_folder = os.path.join(self.main_dir, "model")
         self.images_folder = os.path.join(self.main_dir, "datasets")
@@ -456,6 +457,9 @@ class LoraModelTrainer:
         '''Once completed, copy Lora model to the folder'''
         model_file_name = "{}.safetensors".format(self.project_name)
         lora_model_file = os.path.join(self.output_folder, model_file_name)
+        model_s3_path = "s3://{bucket}/models/{ref}/{file}".format(
+            bucket=BUCKET_NAME, ref=ref_id, file=model_file_name,
+        )
         print(f"📄 Lora model file: " + lora_model_file)
         print(f"📄 Automatic1111 model directory: " + AUTO1111_MODEL_DIR)
         if os.path.exists(lora_model_file):
@@ -467,6 +471,16 @@ class LoraModelTrainer:
             ])
             print(f"✅ Saved.")
 
+            '''Backup model file on S3'''
+            
+            subprocess.call([
+                "aws",
+                "s3",
+                "cp",
+                "{}".format(lora_model_file),
+                "{}".format(model_s3_path),
+            ])
+
         if not os.path.exists(os.path.join(AUTO1111_MODEL_DIR, model_file_name)):
             print(f"⭕ Error: Lora model not found in output folder.")
         
@@ -474,8 +488,17 @@ class LoraModelTrainer:
         subprocess.call([
             "rm",
             "-rf",
-            "{}".format(os.path.join(ROOT_DIR, "lora_training", self.project_name))
+            "{}".format(self.main_dir)
         ])
+
+        '''Update status in Firebase to be `done`'''
+        from firebase_datastore import DataStore
+
+        ds = DataStore()
+        doc = ds.get_doc(collection="models", key=req.ref_id)
+        doc["status"] = "done"
+        doc["modelPath"] = "{}".format(model_s3_path)
+        ds.set_doc(collection="models", key=req.ref_id, data=doc):
 
         return os.path.join(AUTO1111_MODEL_DIR, (self.project_name + ".safetensors"))
 
@@ -484,6 +507,7 @@ if __name__ == "__main__":
     # Local test
     trainer = LoraModelTrainer()
     trainer.train(
+        ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
         model_name="lora_unique_model",
         dataset_dir="/home/ubuntu/images",
     )
