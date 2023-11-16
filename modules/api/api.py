@@ -848,11 +848,12 @@ class Api:
         # x.start()
 
         '''   Single thread processing '''
+        print(f"📄 dataset dir: " + tmp_dir)
         trainer = LoraModelTrainer()
         model_file = trainer.train(
             ref_id=req.ref_id,
             model_name=req.model_name,
-            dataset_dir=tmp_dir
+            dataset_dir=tmp_dir,
         )
 
         return models.LoraModelTrainingResponse(
