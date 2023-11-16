@@ -86,7 +86,7 @@ class LoraModelTrainer:
     dataset_config_file = ""
     accelerate_config_file = ""
 
-    datastore
+    datastore = None
 
     def __init__(self, datastore):
         self.datastore = datastore
