@@ -830,7 +830,7 @@ class Api:
             images.append(s3_url)
 
         ''' 2. Prepare dataset on local'''
-        tmp_dir = "/home/ubuntu/lora_training/{}/images".format(req.ref_id)
+        tmp_dir = "/home/ubuntu/images/{}/images".format(req.ref_id)
         os.makedirs(tmp_dir, exist_ok=True)
         for img in req.images:
             tmp_file = os.path.join(tmp_dir, img.filename)
