@@ -422,7 +422,7 @@ class DreamboothModelTrainer:
         
         os.chdir(self.repo_dir)
 
-        subprocess.call([
+        proc = subprocess.call([
             "sudo",
             "docker",
             "run",
@@ -435,7 +435,7 @@ class DreamboothModelTrainer:
             "{}:/home/user/.cache/huggingface/hub".format(self.hugging_face_cache_dir),
             "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
-            "train_network.py"
+            "train_network.py",
             "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.main_dir, '/work')),
             "--dataset_config={}".format(self.dataset_config_file.replace(self.main_dir, '/work')),
             "--output_dir={}".format(self.output_folder.replace(self.main_dir, '/work')),
@@ -455,6 +455,7 @@ class DreamboothModelTrainer:
             "--v2",
             "--v_parameterization",
         ]) 
+        print('Ran command: {}'.format(proc.args));
 
         '''Once completed, copy trained model to the folder'''
         model_file_name = "{}.safetensors".format(self.project_name)
