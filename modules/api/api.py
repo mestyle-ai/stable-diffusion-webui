@@ -833,7 +833,7 @@ class Api:
         tmp_dir = "/home/ubuntu/lora_training/{}/images".format(req.ref_id)
         os.makedirs(tmp_dir, exist_ok=True)
         for img in req.images:
-            tmp_file = os.path.join([tmp_dir, img.filename])
+            tmp_file = os.path.join(tmp_dir, img.filename)
             with open(tmp_file, "wb") as f:
                 f.write(base64.b64decode(img.base64content))
 
