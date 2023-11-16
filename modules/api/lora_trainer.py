@@ -465,7 +465,7 @@ class LoraModelTrainer:
             ])
             print(f"✅ Saved.")
 
-        if not os.path.exists(os.path.join(AUTO1111_MODEL_DIR, model_file_name))
+        if not os.path.exists(os.path.join(AUTO1111_MODEL_DIR, model_file_name)):
             print(f"⭕ Error: Lora model not found in output folder.")
         
         '''Clean up training environment'''
