@@ -384,7 +384,7 @@ class LoraModelTrainer:
         self.output_folder = os.path.join(self.main_dir, "output")
         self.config_folder = os.path.join(self.main_dir, "config")
         self.log_folder = os.path.join(self.main_dir, "log")
-        for dir in (self.main_dir, self.repo_dir, self.images_folder, self.output_folder, self.config_folder, self.log_folder):
+        for dir in (self.main_dir, self.repo_dir, self.model_folder, self.images_folder, self.output_folder, self.config_folder, self.log_folder):
             os.makedirs(dir, exist_ok=True)
             
         self.config_file = os.path.join(self.config_folder, "training_config.toml")
