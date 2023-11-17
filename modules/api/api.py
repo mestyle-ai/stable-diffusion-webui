@@ -941,17 +941,17 @@ class Api:
         idx = 0
         images = []
         if "images" in response:
-            for idx in range(len(response.images)):
+            for idx in range(len(response["images"])):
                 filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
                 s3_url = S3Storage.upload(
                     prefix=req.ref_id,
                     filename=filename,
                     filetype=FileType.output,
-                    base64content=response.images[idx],
+                    base64content=response["images"][idx],
                 )
                 images.append(s3_url)
         else:
-            print(f"Error: cannot get ")
+            print(f"⭕ Error: cannot get ")
 
         # Return images URL
         return models.LoraApiResponse(
