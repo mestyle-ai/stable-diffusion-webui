@@ -857,6 +857,7 @@ class Api:
             data={"images": images},
         )
 
+    """ This method is using common to manipulate local files cause an error """
     """
     def train_lora(self, req: models.LoraModelTrainingRequest):        
         ''' Stage 1: Record model and prepare inputs'''
