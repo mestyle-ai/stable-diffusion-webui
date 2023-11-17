@@ -1,4 +1,5 @@
 import firebase_admin
+import os
 import uuid
 from firebase_admin import firestore
 from firebase_admin import credentials
