@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-ROOT_DIR = "/home/ubuntu"
+ROOT_DIR = os.path.expanduser('~')
 KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_dataset")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
 TAG_THRESHOLD = 0.35

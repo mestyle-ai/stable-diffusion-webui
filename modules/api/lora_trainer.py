@@ -2,7 +2,7 @@ import os
 import subprocess
 from modules.api.firebase_datastore import DataStore
 
-ROOT_DIR = "/home/ubuntu"
+ROOT_DIR = os.path.expanduser('~')
 KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_trainer")
 AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Lora")
 KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
@@ -88,8 +88,8 @@ class LoraModelTrainer:
 
     datastore = None
 
-    def __init__(self, datastore):
-        self.datastore = datastore
+    def __init__(self):
+        self.datastore = DataStore()
 
 
     def clone_repo(self):
