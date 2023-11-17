@@ -932,6 +932,7 @@ class Api:
 
         ''' Generate images '''
         response = self.text2imgapi(txt2imgreq=param)
+        response = response.json()
 
         # Store images on S3
         idx = 0
@@ -946,6 +947,8 @@ class Api:
                     base64content=response.images[idx],
                 )
                 images.append(s3_url)
+        else:
+            print(f"Error: cannot get ")
 
         # Return images URL
         return models.LoraApiResponse(
