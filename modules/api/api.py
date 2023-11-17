@@ -23,6 +23,8 @@ from modules.api.s3_storage import S3Storage, FileType
 from modules.api.firebase_datastore import DataStore
 from modules.api.lora_preparator import LoraDatasetPreparator
 from modules.api.lora_trainer import LoraModelTrainer
+from modules.api.dreambooth_preparator import DreamboothDatasetPreparator
+from modules.api.dreambooth_trainer import DreamboothModelTrainer
 from modules.shared import opts
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
 from modules.textual_inversion.textual_inversion import create_embedding, train_embedding
@@ -250,6 +252,7 @@ class Api:
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
         self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
+        self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -852,4 +855,85 @@ class Api:
             status="OK",
             msg="OK",
             data={"images": images},
+        )
+
+    """
+    def train_lora(self, req: models.LoraModelTrainingRequest):
+        
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        self.upload_images(req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        ''' Stage 2: Training on the prepared inputs''' 
+        
+        '''   2.1 Generate image tags'''
+        preparator = LoraDatasetPreparator()
+        preparator.tag_images(ref_id=req.ref_id, image_dir=tmp_dir)
+
+
+        '''   2.2 Train model and then store on S3'''
+        trainer = LoraModelTrainer()
+        x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
+        x.start()
+
+        return models.LoraModelTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )
+    """
+
+    def record_model_init(self, ref_id: str):
+        ds = DataStore()
+        doc = ds.get_doc(collection="models", key=ref_id)
+        if doc is not None:
+            doc["status"] = "processing"
+        ds.set_doc(collection="models", key=ref_id, data=doc)
+
+
+    def upload_images(self, images: models.TrainingImage):
+        images = []
+        for img in images:
+            s3_url = S3Storage.upload(
+                filename=img.filename,
+                filetype=FileType.images,
+                base64content=img.base64content,
+            )
+            images.append(s3_url)
+
+    def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
+        home_dir = os.path.expanduser('~')
+        tmp_dir = os.path.join(home_dir, "images", model_ref_id)
+        print(tmp_dir)
+        # tmp_dir = "/home/ubuntu/images/{}".format(model_ref_id)
+        os.makedirs(tmp_dir, exist_ok=True)
+        for img in images:
+            tmp_file = os.path.join(tmp_dir, img.filename)
+            with open(tmp_file, "wb") as f:
+                f.write(base64.b64decode(img.base64content))
+        return tmp_dir
+
+    def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        self.upload_images(req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        '''   2.2 Train model and then store on S3'''
+        trainer = DreamboothModelTrainer()
+        x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
+        x.start()
+
+        ''' Stage 2: Training on the prepared inputs''' 
+        return models.DreamboothModelTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={},
         )
