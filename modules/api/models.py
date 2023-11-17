@@ -146,6 +146,7 @@ class LoraText2ImageRequest(BaseModel):
     original_prompt: str
     lora_model_path: str
     batch_size: int
+    ref_id: str
 
 class DreamboothModelTrainingRequest(BaseModel):
     model_name: str
