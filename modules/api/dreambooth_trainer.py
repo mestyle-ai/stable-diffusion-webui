@@ -380,9 +380,9 @@ class DreamboothModelTrainer:
         self.repo_dir = WORK_DIR
         self.hugging_face_cache_dir = os.path.join(self.main_dir, "cache")
         self.model_folder = os.path.join(self.main_dir, "model")
-        self.images_folder = os.path.join(self.main_dir, "datasets/img")
+        self.images_folder = os.path.join(self.main_dir, "img")
         # TODO: Generate regularization images from a model.
-        self.reg_images_folder = os.path.join(self.main_dir, "datasets/reg_img")
+        self.reg_images_folder = os.path.join(self.main_dir, "reg_img")
         self.output_folder = os.path.join(self.main_dir, "output")
         self.config_folder = os.path.join(self.main_dir, "config")
         self.log_folder = os.path.join(self.main_dir, "log")
