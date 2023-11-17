@@ -301,13 +301,13 @@ class DreamboothModelTrainer:
                     "persistent_data_loader_workers": True,
                     "save_precision": "fp16",
                     "mixed_precision": "fp16",
-                    "output_dir": self.output_folder,
-                    "logging_dir": self.log_folder,
+                    "output_dir": self.output_folder.replace(self.repo_dir, '/work'),
+                    "logging_dir": self.log_folder.replace(self.repo_dir, '/work'),
                     "output_name": self.project_name,
                     "log_prefix": self.project_name,
                 },
                 "model_arguments": {
-                    "pretrained_model_name_or_path": self.model_file,
+                    "pretrained_model_name_or_path": self.model_file.replace(self.repo_dir, '/work'),
                     "v2": self.custom_model_is_based_on_sd2,
                     "v_parameterization": True if self.custom_model_is_based_on_sd2 else None,
                 },
@@ -354,7 +354,7 @@ class DreamboothModelTrainer:
                         "subsets": [
                             {
                                 "num_repeats": self.num_repeats,
-                                "image_dir": self.images_folder,
+                                "image_dir": self.images_folder.replace(self.repo_dir, '/work'),
                                 "class_tokens": None if self.caption_extension else self.project_name
                             }
                         ]
@@ -447,7 +447,7 @@ class DreamboothModelTrainer:
             "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
             "--dataset_config={}".format(self.dataset_config_file.replace(self.repo_dir, '/work')),
             "--output_dir={}".format(self.output_folder.replace(self.repo_dir, '/work')),
-            "--output_name={}".format(ref_id),
+            "--output_name={}".format(self.project_name),
             "--save_model_as=safetensors",
             "--logging_dir={}".format(self.log_folder.replace(self.repo_dir, '/work')),
             "--prior_loss_weight=1.0",
