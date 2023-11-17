@@ -933,7 +933,9 @@ class Api:
 
         ''' Generate images '''
         response = self.text2imgapi(txt2imgreq=param)
-        response = json.loads(response.json())
+        response = response.json()
+        print(response)
+        response = json.loads(response)
 
         # Store images on S3
         idx = 0
