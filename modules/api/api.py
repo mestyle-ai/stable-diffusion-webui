@@ -845,17 +845,32 @@ class Api:
 
 
     def train_lora(self, req: models.LoraModelTrainingRequest):
+        ds = DataStore()
         
-        ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
-        self.record_model_init(req.ref_id)
-        ''' 1. Upload images to S3'''
-        self.upload_images(req.images)
-        ''' 2. Prepare dataset on local'''
-        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+        doc = ds.get_doc(collection="models", key=req.ref_id)
+        if doc is not None:
+            doc["status"] = "processing"
+        ds.set_doc(collection="models", key=req.ref_id, data=doc)
 
-        ''' Stage 2: Training on the prepared inputs''' 
-        
+        ''' 1. Upload images to S3'''
+        images = []
+        for img in req.images:
+            s3_url = S3Storage.upload(
+                filename=img.filename,
+                filetype=FileType.images,
+                base64content=img.base64content,
+            )
+            images.append(s3_url)
+
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = "/home/ubuntu/images/{}".format(req.ref_id)
+        os.makedirs(tmp_dir, exist_ok=True)
+        for img in req.images:
+            tmp_file = os.path.join(tmp_dir, img.filename)
+            with open(tmp_file, "wb") as f:
+                f.write(base64.b64decode(img.base64content))
+
         '''   2.1 Generate image tags'''
         preparator = LoraDatasetPreparator()
         preparator.tag_images(ref_id=req.ref_id, image_dir=tmp_dir)
@@ -866,20 +881,13 @@ class Api:
         x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
         x.start()
 
-        '''   Tested, but timeout - Single thread processing '''
-        # print(f"📄 dataset dir: " + tmp_dir)
-        # trainer = LoraModelTrainer(ds)
-        # model_file = trainer.train(
-        #     ref_id=req.ref_id,
-        #     model_name=req.model_name,
-        #     dataset_dir=tmp_dir,
-        # )
 
         return models.LoraModelTrainingResponse(
             status="OK",
             msg="OK",
             data={"images": images},
         )
+        
 
     def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
         ''' Stage 1: Record model and prepare inputs'''
