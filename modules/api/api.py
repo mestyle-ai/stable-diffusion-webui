@@ -937,7 +937,7 @@ class Api:
         idx = 0
         images = []
         if "images" in response:
-            for idx in range(len(response.images))
+            for idx in range(len(response.images)):
                 filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
                 s3_url = S3Storage.upload(
                     prefix=req.ref_id,
