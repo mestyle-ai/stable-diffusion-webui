@@ -254,6 +254,7 @@ class Api:
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
         self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/lora/v1/txt2img", self.lora_text2imgapi, methods=["POST"], response_model=models.LoraApiResponse)
+        self.add_api_route("/storage/v1/save", self.s3_upload_images , methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
@@ -949,7 +950,26 @@ class Api:
                 )
                 images.append(s3_url)
         else:
-            print(f"⭕ Error: cannot get ")
+            print(f"⭕ Error: cannot get images")
+
+        # Return images URL
+        return models.LoraApiResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )
+
+    def s3_upload_images(self, req: models.UploadImagesRequest):
+        ''' 1. Upload images to S3'''
+        images = []
+        for img in req.images:
+            s3_url = S3Storage.upload(
+                prefix=req.ref_id,
+                filename=img.filename,
+                filetype=FileType.images,
+                base64content=img.base64content,
+            )
+            images.append(s3_url)
 
         # Return images URL
         return models.LoraApiResponse(
