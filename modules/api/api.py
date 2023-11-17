@@ -5,6 +5,7 @@ import time
 import datetime
 import uvicorn
 import ipaddress
+import json
 import requests
 import gradio as gr
 from threading import Lock
@@ -932,7 +933,7 @@ class Api:
 
         ''' Generate images '''
         response = self.text2imgapi(txt2imgreq=param)
-        response = response.json()
+        response = json.loads(response.json())
 
         # Store images on S3
         idx = 0
