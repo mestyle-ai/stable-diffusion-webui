@@ -813,7 +813,6 @@ class Api:
         shared.state.server_command = "stop"
         return Response("Stopping.")
 
-    """
     def train_lora(self, req: models.LoraModelTrainingRequest):
         ds = DataStore()
         
@@ -857,8 +856,8 @@ class Api:
             msg="OK",
             data={"images": images},
         )
-    """
 
+    """
     def train_lora(self, req: models.LoraModelTrainingRequest):        
         ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
@@ -883,6 +882,7 @@ class Api:
             msg="OK",
             data={"images": images},
         )
+    """
 
     def record_model_init(self, ref_id: str):
         ds = DataStore()
