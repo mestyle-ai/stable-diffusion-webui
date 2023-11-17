@@ -435,19 +435,19 @@ class DreamboothModelTrainer:
             "--rm",
             "--gpus=all",
             "-v",
-            "{}:/work".format(self.main_dir),
+            "{}:/work".format(self.repo_dir),
             "-v", 
             ###
             "{}:/home/user/.cache/huggingface/hub".format(self.hugging_face_cache_dir),
             "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
             "train_network.py",
-            "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.main_dir, '/work')),
-            "--dataset_config={}".format(self.dataset_config_file.replace(self.main_dir, '/work')),
-            "--output_dir={}".format(self.output_folder.replace(self.main_dir, '/work')),
-            "--output_name={}".format(self.project_name),
+            "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
+            "--dataset_config={}".format(self.dataset_config_file.replace(self.repo_dir, '/work')),
+            "--output_dir={}".format(self.output_folder.replace(self.repo_dir, '/work')),
+            "--output_name={}".format(ref_id),
             "--save_model_as=safetensors",
-            "--logging_dir=/work/logs",
+            "--logging_dir={}".format(self.log_folder.replace(self.repo_dir, '/work/')),
             "--prior_loss_weight=1.0",
             "--max_train_steps=400",
             "--learning_rate=1e-4",
@@ -461,7 +461,7 @@ class DreamboothModelTrainer:
             "--v2",
             "--v_parameterization",
         ]
-        print(command_args)
+        print('\n'.join(command_args))
         proc = subprocess.call(command_args)
         print('Ran command: {}'.format(proc));
 
