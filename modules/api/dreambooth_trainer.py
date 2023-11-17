@@ -393,7 +393,13 @@ class DreamboothModelTrainer:
         self.dataset_config_file = os.path.join(self.config_folder, "dataset_config.toml")
         self.accelerate_config_file = os.path.join(self.repo_dir, "accelerate_config/config.yaml")
         print("\n# Folders have been prepared")
-
+        print("main dir: {}".format(self.main_dir))
+        print("repo dir: {}".format(self.repo_dir))
+        print("model dir: {}".format(self.model_folder))
+        print("image dir: {}".format(self.images_folder))
+        print("reg image dir: {}".format(self.reg_images_folder))
+        print("output dir: {}".format(self.output_folder))
+        print("config dir: {}".format(self.config_folder))
         '''Copy all dataset into the training folder structure'''
         print("IMAGE FOLDER:", self.images_folder)
         subprocess.Popen(
@@ -455,7 +461,7 @@ class DreamboothModelTrainer:
             "--v2",
             "--v_parameterization",
         ]) 
-        print('Ran command: {}'.format(proc.args));
+        print('Ran command: {}'.format(proc));
 
         '''Once completed, copy trained model to the folder'''
         model_file_name = "{}.safetensors".format(self.project_name)
