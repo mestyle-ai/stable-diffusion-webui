@@ -9,7 +9,7 @@ CAPTION_MIN = 10
 CAPTION_MAX = 75
 
 
-class LoraDatasetPreparator:
+class DreamboothDatasetPreparator:
 
 
     def __environment_preparation(self):
@@ -59,7 +59,7 @@ class LoraDatasetPreparator:
 
 
 if __name__ == "__main__":
-    preparator = LoraDatasetPreparator()
+    preparator = DreamboothDatasetPreparator()
     preparator.tag_images(
         ref_id="134c8678-fdd6-4109-878d-5d44140c8bc3",
         image_dir=os.path.join(os.path.expanduser('~'), 'images'),

@@ -5,6 +5,7 @@ import time
 import datetime
 import uvicorn
 import ipaddress
+import json
 import requests
 import gradio as gr
 from threading import Lock
@@ -23,6 +24,8 @@ from modules.api.s3_storage import S3Storage, FileType
 from modules.api.firebase_datastore import DataStore
 from modules.api.lora_preparator import LoraDatasetPreparator
 from modules.api.lora_trainer import LoraModelTrainer
+from modules.api.dreambooth_preparator import DreamboothDatasetPreparator
+from modules.api.dreambooth_trainer import DreamboothModelTrainer
 from modules.shared import opts
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
 from modules.textual_inversion.textual_inversion import create_embedding, train_embedding
@@ -249,7 +252,9 @@ class Api:
         self.add_api_route("/sdapi/v1/scripts", self.get_scripts_list, methods=["GET"], response_model=models.ScriptsList)
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
-        self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
+        self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraApiResponse)
+        self.add_api_route("/lora/v1/txt2img", self.lora_text2imgapi, methods=["POST"], response_model=models.LoraApiResponse)
+        self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -810,6 +815,38 @@ class Api:
         shared.state.server_command = "stop"
         return Response("Stopping.")
 
+    def record_model_init(self, ref_id: str):
+        ds = DataStore()
+        doc = ds.get_doc(collection="models", key=ref_id)
+        if doc is not None:
+            doc["status"] = "processing"
+        ds.set_doc(collection="models", key=ref_id, data=doc)
+
+
+    def upload_images(self, ref: str, images: models.TrainingImage):
+        images = []
+        for img in images:
+            s3_url = S3Storage.upload(
+                prefix=ref,
+                filename=img.filename,
+                filetype=FileType.images,
+                base64content=img.base64content,
+            )
+            images.append(s3_url)
+
+    def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
+        home_dir = os.path.expanduser('~')
+        tmp_dir = os.path.join(home_dir, "images", model_ref_id)
+        print(tmp_dir)
+        # tmp_dir = "/home/ubuntu/images/{}".format(model_ref_id)
+        os.makedirs(tmp_dir, exist_ok=True)
+        for img in images:
+            tmp_file = os.path.join(tmp_dir, img.filename)
+            with open(tmp_file, "wb") as f:
+                f.write(base64.b64decode(img.base64content))
+        return tmp_dir
+
+
     def train_lora(self, req: models.LoraModelTrainingRequest):
         ds = DataStore()
         
@@ -823,6 +860,7 @@ class Api:
         images = []
         for img in req.images:
             s3_url = S3Storage.upload(
+                prefix=req.ref_id,
                 filename=img.filename,
                 filetype=FileType.images,
                 base64content=img.base64content,
@@ -843,20 +881,78 @@ class Api:
 
 
         '''   2.2 Train model and then store on S3'''
-        trainer = LoraModelTrainer(ds)
+        trainer = LoraModelTrainer()
         x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
         x.start()
 
-        '''   Tested, but timeout - Single thread processing '''
-        # print(f"📄 dataset dir: " + tmp_dir)
-        # trainer = LoraModelTrainer(ds)
-        # model_file = trainer.train(
-        #     ref_id=req.ref_id,
-        #     model_name=req.model_name,
-        #     dataset_dir=tmp_dir,
-        # )
 
-        return models.LoraModelTrainingResponse(
+        return models.LoraApiResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )
+
+
+    def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        self.upload_images(ref=req.ref_id, images=req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        '''   2.2 Train model and then store on S3'''
+        trainer = DreamboothModelTrainer()
+        x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
+        x.start()
+
+        ''' Stage 2: Training on the prepared inputs''' 
+        return models.DreamboothModelTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={},
+        )
+
+    def _random_seed(self):
+        import random
+        num = random.random()
+        return int(num * 100000000)
+
+    def lora_text2imgapi(self, req: models.LoraText2ImageRequest):
+        # Prompt engineering
+        param = models.StableDiffusionTxt2ImgProcessingAPI()
+        lora_prompt = lora_prompt = "<lora:{}:1>".format(req.lora_model_path.split("/")[-1:][0][:-12])
+        param.prompt = ",".join([req.original_prompt, lora_prompt])
+        param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
+        param.seed = self._random_seed()
+        param.batch_size = req.batch_size
+        param.override_settings: {
+            "sd_model_checkpoint": "majicmixRealistic_v7.safetensors [7c819b6d13]"
+        }
+
+        ''' Generate images '''
+        response = self.text2imgapi(txt2imgreq=param)
+        response = json.loads(response.json())
+
+        # Store images on S3
+        idx = 0
+        images = []
+        if "images" in response:
+            for idx in range(len(response["images"])):
+                filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
+                s3_url = S3Storage.upload(
+                    prefix=req.ref_id,
+                    filename=filename,
+                    filetype=FileType.output,
+                    base64content=response["images"][idx],
+                )
+                images.append(s3_url)
+        else:
+            print(f"⭕ Error: cannot get ")
+
+        # Return images URL
+        return models.LoraApiResponse(
             status="OK",
             msg="OK",
             data={"images": images},

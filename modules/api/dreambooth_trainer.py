@@ -3,10 +3,9 @@ import subprocess
 from modules.api.firebase_datastore import DataStore
 
 ROOT_DIR = os.path.expanduser('~')
-KOHYA_DIR = os.path.join(ROOT_DIR, "kohya_trainer")
+WORK_FOLDER = "dreambooth_training"
+WORK_DIR = os.path.join(ROOT_DIR, WORK_FOLDER)
 AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Lora")
-KOHYA_REPO = "https://github.com/kohya-ss/sd-scripts"
-COMMIT = "95ae56bd22c285ccb2fe5fca96d92f39842bb99b"
 COLAB = False
 XFORMERS = True
 BETTER_EPOCH_NAMES = True
@@ -14,7 +13,7 @@ LOAD_TRUNCATED_IMAGES = True
 BUCKET_NAME = "mestyle-app"
 
 
-class LoraModelTrainer:
+class DreamboothModelTrainer:
     
     project_name = ""
     model_file = ""
@@ -78,6 +77,7 @@ class LoraModelTrainer:
     main_dir = ""
     deps_dir = ""
     repo_dir = ""
+    hugging_face_cache_dir = ""
     images_folder = ""
     output_folder = ""
     config_folder = ""
@@ -92,28 +92,6 @@ class LoraModelTrainer:
         self.datastore = DataStore()
 
 
-    def clone_repo(self):
-        os.chdir(ROOT_DIR)
-        subprocess.call(["git", "clone", KOHYA_REPO, KOHYA_DIR])
-        os.chdir(KOHYA_DIR)
-        if COMMIT:
-           subprocess.call(["git", "reset", "--hard", COMMIT])
-        os.chdir(ROOT_DIR)
-
-
-    def install_dependencies(self):
-        self.clone_repo()
-
-        from accelerate.utils import write_basic_config
-        if not os.path.exists(self.accelerate_config_file):
-            write_basic_config(save_location=self.accelerate_config_file)
-
-        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-        os.environ["BITSANDBYTES_NOWELCOME"] = "1"
-        os.environ["SAFETENSORS_FAST_GPU"] = "1"
-        pass
-
-
     def validate_dataset(self):
         import toml
         import time
@@ -122,6 +100,7 @@ class LoraModelTrainer:
         supported_types = (".png", ".jpg", ".jpeg", ".webp", ".bmp")
         print("\n💿 Checking dataset...")
 
+        # TODO: Set custom_dataset so it can recognize and validate reg folder.
         if self.custom_dataset:
             try:
                 datconf = toml.loads(self.custom_dataset)
@@ -278,6 +257,7 @@ class LoraModelTrainer:
     def create_config(self):
         import toml
 
+        # TODO: currently this is not use. Please try to use config_file in the training script.
         config_file = self.config_file
         if self.override_config_file:
             config_file = self.override_config_file
@@ -396,14 +376,17 @@ class LoraModelTrainer:
         self.project_name = model_name
 
         '''Prepare folders structure'''
-        self.main_dir = os.path.join(ROOT_DIR, "lora_training", ref_id)
-        self.repo_dir = KOHYA_DIR
+        self.main_dir = os.path.join(ROOT_DIR, WORK_FOLDER, ref_id)
+        self.repo_dir = WORK_DIR
+        self.hugging_face_cache_dir = os.path.join(self.main_dir, "cache")
         self.model_folder = os.path.join(self.main_dir, "model")
-        self.images_folder = os.path.join(self.main_dir, "datasets")
+        self.images_folder = os.path.join(self.main_dir, "datasets/img")
+        # TODO: Generate regularization images from a model.
+        self.reg_images_folder = os.path.join(self.main_dir, "datasets/reg_img")
         self.output_folder = os.path.join(self.main_dir, "output")
         self.config_folder = os.path.join(self.main_dir, "config")
         self.log_folder = os.path.join(self.main_dir, "log")
-        for dir in (self.main_dir, self.repo_dir, self.model_folder, self.images_folder, self.output_folder, self.config_folder, self.log_folder):
+        for dir in (self.main_dir, self.repo_dir, self.hugging_face_cache_dir, self.model_folder, self.images_folder, self.reg_images_folder, self.output_folder, self.config_folder, self.log_folder):
             os.makedirs(dir, exist_ok=True)
             
         self.config_file = os.path.join(self.config_folder, "training_config.toml")
@@ -424,16 +407,6 @@ class LoraModelTrainer:
         if not self.validate_dataset():
             return
 
-        if not self.dependencies_installed:
-            print("\n🏭 Installing dependencies...\n")
-            t0 = time()
-            self.install_dependencies()
-            t1 = time()
-            self.dependencies_installed = True
-            print(f"\n✅ Installation finished in {int(t1-t0)} seconds.")
-        else:
-            print("\n✅ Dependencies already installed.")
-
         if self.old_model_url != self.model_url or not self.model_file or not os.path.exists(self.model_file):
             print("\n🔄 Downloading model...")
             if not self.download_model():
@@ -449,40 +422,54 @@ class LoraModelTrainer:
         
         os.chdir(self.repo_dir)
 
-        subprocess.call([
-            "accelerate",
-            "launch",
+        proc = subprocess.call([
+            "sudo",
+            "docker",
+            "run",
+            "--rm",
+            "--gpus=all",
+            "-v",
+            "{}:/work".format(self.main_dir),
+            "-v", 
+            ###
+            "{}:/home/user/.cache/huggingface/hub".format(self.hugging_face_cache_dir),
+            "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
             "train_network.py",
-            "--pretrained_model_name_or_path={}".format(self.model_file),
-            "--dataset_config={}".format(self.dataset_config_file),
-            "--output_dir={}".format(self.output_folder),
+            "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.main_dir, '/work')),
+            "--dataset_config={}".format(self.dataset_config_file.replace(self.main_dir, '/work')),
+            "--output_dir={}".format(self.output_folder.replace(self.main_dir, '/work')),
             "--output_name={}".format(self.project_name),
             "--save_model_as=safetensors",
+            "--logging_dir=/work/logs",
             "--prior_loss_weight=1.0",
             "--max_train_steps=400",
             "--learning_rate=1e-4",
+            '--optimizer_type=AdamW8bit',
             "--xformers",
-            "--mixed_precision=fp16",
+            '--mixed_precision=fp16',
             "--cache_latents",
             "--gradient_checkpointing",
             "--save_every_n_epochs=1",
-            "--network_module=networks.lora"
-        ])
+            "--network_module=networks.lora",
+            "--v2",
+            "--v_parameterization",
+        ]) 
+        print('Ran command: {}'.format(proc.args));
 
-        '''Once completed, copy Lora model to the folder'''
+        '''Once completed, copy trained model to the folder'''
         model_file_name = "{}.safetensors".format(self.project_name)
-        lora_model_file = os.path.join(self.output_folder, model_file_name)
+        trained_model_file = os.path.join(self.output_folder, model_file_name)
         model_s3_path = "s3://{bucket}/models/{ref}/{file}".format(
             bucket=BUCKET_NAME, ref=ref_id, file=model_file_name,
         )
-        print(f"📄 Lora model file: " + lora_model_file)
+        print(f"📄 Trained model file: " + trained_model_file)
         print(f"📄 Automatic1111 model directory: " + AUTO1111_MODEL_DIR)
-        if os.path.exists(lora_model_file):
-            print(f"🔄 Saving Lora model to automatic1111...")
+        if os.path.exists(trained_model_file):
+            print(f"🔄 Saving trained model to automatic1111...")
             subprocess.call([
                 "cp",
-                "{}".format(lora_model_file),
+                "{}".format(trained_model_file),
                 "{}".format(AUTO1111_MODEL_DIR),
             ])
             print(f"✅ Saved.")
@@ -493,12 +480,12 @@ class LoraModelTrainer:
                 "aws",
                 "s3",
                 "cp",
-                "{}".format(lora_model_file),
+                "{}".format(trained_model_file),
                 "{}".format(model_s3_path),
             ])
 
         if not os.path.exists(os.path.join(AUTO1111_MODEL_DIR, model_file_name)):
-            print(f"⭕ Error: Lora model not found in output folder.")
+            print(f"⭕ Error: trained model not found in output folder.")
         
         '''Clean up training environment'''
         subprocess.call([

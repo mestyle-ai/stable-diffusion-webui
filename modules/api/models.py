@@ -127,17 +127,34 @@ StableDiffusionImg2ImgProcessingAPI = PydanticModelGenerator(
     ]
 ).generate_model()
 
-class LoraModelTrainingImage(BaseModel):
+class TrainingImage(BaseModel):
     filename: str
     base64content: str
 
 class LoraModelTrainingRequest(BaseModel):
     model_name: str
     user: str
-    images: list[LoraModelTrainingImage]
+    images: list[TrainingImage]
     ref_id: str
 
-class LoraModelTrainingResponse(BaseModel):
+class LoraApiResponse(BaseModel):
+    status: str
+    msg: str
+    data: dict
+
+class LoraText2ImageRequest(BaseModel):
+    original_prompt: str
+    lora_model_path: str
+    batch_size: int
+    ref_id: str
+
+class DreamboothModelTrainingRequest(BaseModel):
+    model_name: str
+    user: str
+    images: list[TrainingImage]
+    ref_id: str
+
+class DreamboothModelTrainingResponse(BaseModel):
     status: str
     msg: str
     data: dict
