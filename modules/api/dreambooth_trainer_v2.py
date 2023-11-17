@@ -13,7 +13,7 @@ LOAD_TRUNCATED_IMAGES = True
 BUCKET_NAME = "mestyle-app"
 
 
-class DreamboothModelTrainer:
+class DreamboothModelTrainerV2:
     
     project_name = ""
     model_file = ""
@@ -445,8 +445,7 @@ class DreamboothModelTrainer:
             "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
             "train_network.py",
-            "--pretrained_model_name_or_path=CompVis/stable-diffusion-v1-4",
-            # "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
+            "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
             "--dataset_config={}".format(self.dataset_config_file.replace(self.repo_dir, '/work')),
             "--output_dir={}".format(self.output_folder.replace(self.repo_dir, '/work')),
             "--output_name={}".format(self.project_name),
