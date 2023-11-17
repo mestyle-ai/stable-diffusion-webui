@@ -367,6 +367,7 @@ class DreamboothModelTrainer:
 
         with open(dataset_config_file, "w") as f:
             f.write(toml.dumps(dataset_config_dict))
+        print(toml.dumps(dataset_config_dict))
         print(f"📄 Dataset config saved to {dataset_config_file}")
 
 
@@ -447,7 +448,7 @@ class DreamboothModelTrainer:
             "--output_dir={}".format(self.output_folder.replace(self.repo_dir, '/work')),
             "--output_name={}".format(ref_id),
             "--save_model_as=safetensors",
-            "--logging_dir={}".format(self.log_folder.replace(self.repo_dir, '/work/')),
+            "--logging_dir={}".format(self.log_folder.replace(self.repo_dir, '/work')),
             "--prior_loss_weight=1.0",
             "--max_train_steps=400",
             "--learning_rate=1e-4",
