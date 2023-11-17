@@ -251,7 +251,8 @@ class Api:
         self.add_api_route("/sdapi/v1/scripts", self.get_scripts_list, methods=["GET"], response_model=models.ScriptsList)
         self.add_api_route("/sdapi/v1/script-info", self.get_script_info, methods=["GET"], response_model=list[models.ScriptInfo])
         self.add_api_route("/sdapi/v1/extensions", self.get_extensions_list, methods=["GET"], response_model=list[models.ExtensionItem])
-        self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraModelTrainingResponse)
+        self.add_api_route("/lora/v1/train", self.train_lora, methods=["POST"], response_model=models.LoraApiResponse)
+        self.add_api_route("/lora/v1/txt2img", self.lora_text2imgapi, methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
@@ -821,10 +822,11 @@ class Api:
         ds.set_doc(collection="models", key=ref_id, data=doc)
 
 
-    def upload_images(self, images: models.TrainingImage):
+    def upload_images(self, ref: str, images: models.TrainingImage):
         images = []
         for img in images:
             s3_url = S3Storage.upload(
+                prefix=ref,
                 filename=img.filename,
                 filetype=FileType.images,
                 base64content=img.base64content,
@@ -857,6 +859,7 @@ class Api:
         images = []
         for img in req.images:
             s3_url = S3Storage.upload(
+                prefix=req.ref_id,
                 filename=img.filename,
                 filetype=FileType.images,
                 base64content=img.base64content,
@@ -882,19 +885,19 @@ class Api:
         x.start()
 
 
-        return models.LoraModelTrainingResponse(
+        return models.LoraApiResponse(
             status="OK",
             msg="OK",
             data={"images": images},
         )
-        
+
 
     def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
         ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
         ''' 1. Upload images to S3'''
-        self.upload_images(req.images)
+        self.upload_images(ref=req.ref_id, images=req.images)
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
@@ -908,4 +911,45 @@ class Api:
             status="OK",
             msg="OK",
             data={},
+        )
+
+    def _random_seed(self):
+        import random
+        num = random.random()
+        return int(num * 100000000)
+
+    def lora_text2imgapi(self, req: models.LoraText2ImageRequest):
+        # Prompt engineering
+        param = models.StableDiffusionTxt2ImgProcessingAPI()
+        lora_prompt = lora_prompt = "<lora:{}:1>".format(s3path.split("/")[-1:][0][:-12])
+        param.prompt = ",".join([req.original_prompt, lora_prompt])
+        param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
+        param.seed = self._random_seed()
+        param.batch_size = req.batch_size
+        param.override_settings: {
+            "sd_model_checkpoint": "majicmixRealistic_v7.safetensors [7c819b6d13]"
+        }
+
+        ''' Generate images '''
+        response = self.text2imgapi(txt2imgreq=param)
+
+        # Store images on S3
+        idx = 0
+        images = []
+        if "images" in response:
+            for idx in range(len(response.images))
+                filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
+                s3_url = S3Storage.upload(
+                    prefix=req.ref_id,
+                    filename=filename,
+                    filetype=FileType.output,
+                    base64content=response.images[idx],
+                )
+                images.append(s3_url)
+
+        # Return images URL
+        return models.LoraApiResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
         )

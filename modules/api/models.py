@@ -137,10 +137,15 @@ class LoraModelTrainingRequest(BaseModel):
     images: list[TrainingImage]
     ref_id: str
 
-class LoraModelTrainingResponse(BaseModel):
+class LoraApiResponse(BaseModel):
     status: str
     msg: str
     data: dict
+
+class LoraText2ImageRequest(BaseModel):
+    original_prompt: str
+    lora_model_path: str
+    batch_size:
 
 class DreamboothModelTrainingRequest(BaseModel):
     model_name: str

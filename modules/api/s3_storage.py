@@ -10,6 +10,7 @@ BUCKET_NAME = "mestyle-app"
 class FileType(Enum):
     images = "images"
     models = "models"
+    output = "output"
 
 class S3Storage:
 
@@ -17,12 +18,12 @@ class S3Storage:
         pass
 
     @staticmethod
-    def upload(filename: str, filetype: FileType, base64content: str):
+    def upload(prefix: str, filename: str, filetype: FileType, base64content: str):
         """
         Upload based64 encoded content to S3 storage bucket
         """
         s3 = boto3.resource("s3")
-        s3path = "/".join([filetype.name, filename])
+        s3path = "/".join([filetype.name, prefix, filename])
         obj = s3.Object(BUCKET_NAME, s3path)
         obj.put(Body=base64.b64decode(base64content))
         
