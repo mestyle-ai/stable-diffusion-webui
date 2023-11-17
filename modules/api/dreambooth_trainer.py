@@ -428,7 +428,7 @@ class DreamboothModelTrainer:
         
         os.chdir(self.repo_dir)
 
-        proc = subprocess.call([
+        command_args = [
             "sudo",
             "docker",
             "run",
@@ -460,7 +460,9 @@ class DreamboothModelTrainer:
             "--network_module=networks.lora",
             "--v2",
             "--v_parameterization",
-        ]) 
+        ]
+        print(command_args)
+        proc = subprocess.call(command_args)
         print('Ran command: {}'.format(proc));
 
         '''Once completed, copy trained model to the folder'''
