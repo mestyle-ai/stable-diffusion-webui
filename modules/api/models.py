@@ -148,6 +148,10 @@ class LoraText2ImageRequest(BaseModel):
     batch_size: int
     ref_id: str
 
+class UploadImagesRequest(BaseModel):
+    ref_id: str
+    images: list[TrainingImage]
+
 class DreamboothModelTrainingRequest(BaseModel):
     model_name: str
     user: str
