@@ -328,6 +328,7 @@ class DreamboothModelTrainer:
 
         with open(config_file, "w") as f:
             f.write(toml.dumps(config_dict))
+        print(toml.dumps(config_dict))
         print(f"\n📄 Config saved to {config_file}")
 
         dataset_config_file = self.dataset_config_file
