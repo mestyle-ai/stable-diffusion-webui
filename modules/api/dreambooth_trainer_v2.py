@@ -416,6 +416,7 @@ class DreamboothModelTrainerV2:
         if not self.validate_dataset():
             return
 
+        ''' no need to download as the docker can download for us by specifying repo
         if self.old_model_url != self.model_url or not self.model_file or not os.path.exists(self.model_file):
             print("\n🔄 Downloading model...")
             if not self.download_model():
@@ -424,6 +425,7 @@ class DreamboothModelTrainerV2:
             print()
         else:
             print("\n🔄 Model already downloaded.\n")
+        '''
 
         self.create_config()
 
