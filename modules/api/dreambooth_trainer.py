@@ -30,7 +30,7 @@ class DreamboothModelTrainer:
     
     old_model_url = ""
     # Model: realspice (https://civitai.com/models/158734/realspice)
-    model_url = "https://civitai.com/api/download/models/208629?type=Model&format=SafeTensor&size=pruned&fp=fp16"
+    model_url = "https://huggingface.co/CompVis/stable-diffusion-v1-4/blob/main/unet/diffusion_pytorch_model.fp16.safetensors"
     base_model_file = os.path.join(ROOT_DIR, "base_models/v1-5-pruned-emaonly.safetensors")
     custom_model_is_based_on_sd2 = False
     
@@ -189,7 +189,7 @@ class DreamboothModelTrainer:
     def download_model(self):
         import re
         real_model_url = self.model_url.strip()
-
+        print(real_model_url)
         if real_model_url.lower().endswith((".ckpt", ".safetensors")):
             # self.model_file = f"/content{real_model_url[real_model_url.rfind('/'):]}"
             self.model_file = f"{real_model_url[real_model_url.rfind('/'):]}"
