@@ -843,18 +843,10 @@ class Api:
 
 
         '''   2.2 Train model and then store on S3'''
-        trainer = LoraModelTrainer(ds)
+        trainer = LoraModelTrainer()
         x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
         x.start()
 
-        '''   Tested, but timeout - Single thread processing '''
-        # print(f"📄 dataset dir: " + tmp_dir)
-        # trainer = LoraModelTrainer(ds)
-        # model_file = trainer.train(
-        #     ref_id=req.ref_id,
-        #     model_name=req.model_name,
-        #     dataset_dir=tmp_dir,
-        # )
 
         return models.LoraModelTrainingResponse(
             status="OK",

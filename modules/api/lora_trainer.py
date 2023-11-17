@@ -519,11 +519,3 @@ class LoraModelTrainer:
 
 if __name__ == "__main__":
     pass
-    ''' Local test '''
-    # datastore = DataStore()
-    # trainer = LoraModelTrainer(datastore)
-    # trainer.train(
-    #     ref_id="00000000-0000-0000-0000-000000000000",
-    #     model_name="mestyle-first-model",
-    #     dataset_dir="/home/ubuntu/images/00000000-0000-0000-0000-000000000000",
-    # )
