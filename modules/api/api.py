@@ -813,6 +813,7 @@ class Api:
         shared.state.server_command = "stop"
         return Response("Stopping.")
 
+    """
     def train_lora(self, req: models.LoraModelTrainingRequest):
         ds = DataStore()
         
@@ -856,10 +857,9 @@ class Api:
             msg="OK",
             data={"images": images},
         )
-
     """
-    def train_lora(self, req: models.LoraModelTrainingRequest):
-        
+
+    def train_lora(self, req: models.LoraModelTrainingRequest):        
         ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
@@ -868,12 +868,10 @@ class Api:
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
-        ''' Stage 2: Training on the prepared inputs''' 
-        
+        ''' Stage 2: Training on the prepared inputs'''         
         '''   2.1 Generate image tags'''
         preparator = LoraDatasetPreparator()
         preparator.tag_images(ref_id=req.ref_id, image_dir=tmp_dir)
-
 
         '''   2.2 Train model and then store on S3'''
         trainer = LoraModelTrainer()
@@ -885,7 +883,6 @@ class Api:
             msg="OK",
             data={"images": images},
         )
-    """
 
     def record_model_init(self, ref_id: str):
         ds = DataStore()
