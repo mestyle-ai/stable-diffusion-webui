@@ -921,7 +921,7 @@ class Api:
     def lora_text2imgapi(self, req: models.LoraText2ImageRequest):
         # Prompt engineering
         param = models.StableDiffusionTxt2ImgProcessingAPI()
-        lora_prompt = lora_prompt = "<lora:{}:1>".format(s3path.split("/")[-1:][0][:-12])
+        lora_prompt = lora_prompt = "<lora:{}:1>".format(req.lora_model_path.split("/")[-1:][0][:-12])
         param.prompt = ",".join([req.original_prompt, lora_prompt])
         param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
         param.seed = self._random_seed()
