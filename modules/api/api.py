@@ -836,6 +836,7 @@ class Api:
                 base64content=img.base64content,
             )
             images.append(s3_url)
+        return images
 
     def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
         home_dir = os.path.expanduser('~')
@@ -900,7 +901,7 @@ class Api:
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
         ''' 1. Upload images to S3'''
-        self.upload_images(ref=req.ref_id, images=req.images)
+        images = self.upload_images(ref=req.ref_id, images=req.images)
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
@@ -921,7 +922,7 @@ class Api:
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
         ''' 1. Upload images to S3'''
-        self.upload_images(ref=req.ref_id, images=req.images)
+        images = self.upload_images(ref=req.ref_id, images=req.images)
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
