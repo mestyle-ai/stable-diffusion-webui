@@ -999,7 +999,7 @@ class Api:
 
         # Prompt engineering
         param = models.StableDiffusionTxt2ImgProcessingAPI()
-        param.prompt = req.original_prompt
+        param.prompt = req.original_prompt.replace("scented candle", "<atd> scented candle")
         param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
         param.seed = self._random_seed()
         param.batch_size = req.batch_size
