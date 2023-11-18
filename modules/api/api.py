@@ -913,7 +913,7 @@ class Api:
         return models.DreamboothModelTrainingResponse(
             status="OK",
             msg="OK",
-            data={},
+            data={"images": images},
         )
 
     def train_dreambooth_v2(self, req: models.DreamboothModelTrainingRequest):
@@ -934,7 +934,7 @@ class Api:
         return models.DreamboothModelTrainingResponse(
             status="OK",
             msg="OK",
-            data={},
+            data={"images": images},
         )
 
     def _random_seed(self):
