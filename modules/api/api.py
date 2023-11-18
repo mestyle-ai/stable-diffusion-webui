@@ -828,7 +828,7 @@ class Api:
 
 
     def upload_images(self, ref: str, images: models.TrainingImage):
-        images = []
+        uploaded_images = []
         for img in images:
             s3_url = S3Storage.upload(
                 prefix=ref,
@@ -836,8 +836,8 @@ class Api:
                 filetype=FileType.images,
                 base64content=img.base64content,
             )
-            images.append(s3_url)
-        return images
+            uploaded_images.append(s3_url)
+        return uploaded_images
 
     def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
         home_dir = os.path.expanduser('~')
