@@ -982,6 +982,57 @@ class Api:
             data={"images": images},
         )
 
+    def dreambooth_text2imgapi(self, req: models.DreamboothText2ImageRequest):
+        # Retrieve trained Dreambooth model 
+        model_filename = req.model_path.split("/")[-1:][0]
+
+        response = requests.get("https://mestyle.milodads.xyz/sdapi/v1/sd-models")
+        response = response.json()
+
+        model_checkpoint = ""
+        for model in response:
+            if "{}".format(model["title"]).startswith(model_filename):
+                print(" > Found:", model["title"])
+                model_checkpoint = model["title"]
+                break
+
+        # Prompt engineering
+        param = models.StableDiffusionTxt2ImgProcessingAPI()
+        param.prompt = req.original_prompt
+        param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
+        param.seed = self._random_seed()
+        param.batch_size = req.batch_size
+        param.override_settings: {
+            "sd_model_checkpoint": model_checkpoint,
+        }
+
+        ''' Generate images '''
+        response = self.text2imgapi(txt2imgreq=param)
+        response = json.loads(response.json())
+
+        # Store images on S3
+        idx = 0
+        images = []
+        if "images" in response:
+            for idx in range(len(response["images"])):
+                filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
+                s3_url = S3Storage.upload(
+                    prefix=req.ref_id,
+                    filename=filename,
+                    filetype=FileType.output,
+                    base64content=response["images"][idx],
+                )
+                images.append(s3_url)
+        else:
+            print(f"⭕ Error: cannot get images")
+
+        # Return images URL
+        return models.LoraApiResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )
+
     def s3_upload_images(self, req: models.UploadImagesRequest):
         ''' 1. Upload images to S3'''
         images = []
