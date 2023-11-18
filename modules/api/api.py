@@ -258,7 +258,7 @@ class Api:
         self.add_api_route("/storage/v1/save", self.s3_upload_images , methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
         self.add_api_route("/dreambooth/v2/train", self.train_dreambooth_v2, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
-        self.add_api_route("/dreambooth/v2/txt2img", self.dreambooth_text2imgapi, methods=["POST"], resonse_model=models.DreamboothApiResponse)
+        self.add_api_route("/dreambooth/v2/txt2img", self.dreambooth_text2imgapi, methods=["POST"], response_model=models.DreamboothApiResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
