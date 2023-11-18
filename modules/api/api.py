@@ -990,12 +990,12 @@ class Api:
         response = requests.get("https://mestyle.milodads.xyz/sdapi/v1/sd-models")
         response = response.json()
 
-        model_checkpoint = ""
-        for model in response:
-            if "{}".format(model["title"]).startswith(model_filename):
-                print(" > Found:", model["title"])
-                model_checkpoint = model["title"]
-                break
+        model_checkpoint = "db-atd-candle.safetensors [fb351a5ded]"
+        # for model in response:
+        #     if "{}".format(model["title"]).startswith(model_filename):
+        #         print(" > Found:", model["title"])
+        #         model_checkpoint = model["title"]
+        #         break
 
         # Prompt engineering
         param = models.StableDiffusionTxt2ImgProcessingAPI()
