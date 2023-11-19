@@ -5,7 +5,7 @@ from modules.api.firebase_datastore import DataStore
 ROOT_DIR = os.path.expanduser('~')
 WORK_FOLDER = "dreambooth_training"
 WORK_DIR = os.path.join(ROOT_DIR, WORK_FOLDER)
-AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Stable-diffusion")
+AUTO1111_MODEL_DIR = os.path.join(ROOT_DIR, "stable-diffusion-webui/models/Lora")
 COLAB = False
 XFORMERS = True
 BETTER_EPOCH_NAMES = True
@@ -13,7 +13,7 @@ LOAD_TRUNCATED_IMAGES = True
 BUCKET_NAME = "mestyle-app"
 
 
-class DreamboothModelTrainer:
+class DreamboothModelTrainerV2:
     
     project_name = ""
     model_file = ""
@@ -426,7 +426,7 @@ class DreamboothModelTrainer:
         else:
             print("\n🔄 Model already downloaded.\n")
         '''
-        
+
         self.create_config()
 
         print("\n⭐ Starting trainer...\n")
@@ -446,23 +446,25 @@ class DreamboothModelTrainer:
             "{}:/home/user/.cache/huggingface/hub".format(self.hugging_face_cache_dir),
             "aoirint/sd_scripts",
             "--num_cpu_threads_per_process=1",
-            "train_db.py",
-            "--pretrained_model_name_or_path=CompVis/stable-diffusion-v1-4",
-            # "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
+            "train_network.py",
+            "--pretrained_model_name_or_path={}".format(self.model_file.replace(self.repo_dir, '/work')),
             "--dataset_config={}".format(self.dataset_config_file.replace(self.repo_dir, '/work')),
             "--output_dir={}".format(self.output_folder.replace(self.repo_dir, '/work')),
             "--output_name={}".format(self.project_name),
             "--save_model_as=safetensors",
             "--logging_dir={}".format(self.log_folder.replace(self.repo_dir, '/work')),
             "--prior_loss_weight=1.0",
-            "--max_train_steps=10",
-            "--learning_rate=1e-5",
+            "--max_train_steps=400",
+            "--learning_rate=1e-4",
             '--optimizer_type=AdamW8bit',
             "--xformers",
             '--mixed_precision=fp16',
             "--cache_latents",
             "--gradient_checkpointing",
             "--save_every_n_epochs=1",
+            "--network_module=networks.lora",
+            "--v2",
+            "--v_parameterization",
         ]
         print('\n'.join(command_args))
         proc = subprocess.call(command_args)

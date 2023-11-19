@@ -26,6 +26,7 @@ from modules.api.lora_preparator import LoraDatasetPreparator
 from modules.api.lora_trainer import LoraModelTrainer
 from modules.api.dreambooth_preparator import DreamboothDatasetPreparator
 from modules.api.dreambooth_trainer import DreamboothModelTrainer
+from modules.api.dreambooth_trainer_v2 import DreamboothModelTrainerV2
 from modules.shared import opts
 from modules.processing import StableDiffusionProcessingTxt2Img, StableDiffusionProcessingImg2Img, process_images
 from modules.textual_inversion.textual_inversion import create_embedding, train_embedding
@@ -256,6 +257,8 @@ class Api:
         self.add_api_route("/lora/v1/txt2img", self.lora_text2imgapi, methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/storage/v1/save", self.s3_upload_images , methods=["POST"], response_model=models.LoraApiResponse)
         self.add_api_route("/dreambooth/v1/train", self.train_dreambooth, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
+        self.add_api_route("/dreambooth/v1/txt2img", self.dreambooth_text2imgapi, methods=["POST"], response_model=models.DreamboothApiResponse)
+        self.add_api_route("/dreambooth/v2/train", self.train_dreambooth_v2, methods=["POST"], response_model=models.DreamboothModelTrainingResponse)
 
         if shared.cmd_opts.api_server_stop:
             self.add_api_route("/sdapi/v1/server-kill", self.kill_webui, methods=["POST"])
@@ -825,7 +828,7 @@ class Api:
 
 
     def upload_images(self, ref: str, images: models.TrainingImage):
-        images = []
+        uploaded_images = []
         for img in images:
             s3_url = S3Storage.upload(
                 prefix=ref,
@@ -833,7 +836,8 @@ class Api:
                 filetype=FileType.images,
                 base64content=img.base64content,
             )
-            images.append(s3_url)
+            uploaded_images.append(s3_url)
+        return uploaded_images
 
     def prepare_local_images(self, images: models.TrainingImage, model_ref_id: str):
         home_dir = os.path.expanduser('~')
@@ -893,13 +897,12 @@ class Api:
             data={"images": images},
         )
 
-
     def train_dreambooth(self, req: models.DreamboothModelTrainingRequest):
         ''' Stage 1: Record model and prepare inputs'''
         '''Update status in Firebase to be `processing`'''
         self.record_model_init(req.ref_id)
         ''' 1. Upload images to S3'''
-        self.upload_images(ref=req.ref_id, images=req.images)
+        images = self.upload_images(ref=req.ref_id, images=req.images)
         ''' 2. Prepare dataset on local'''
         tmp_dir = self.prepare_local_images(req.images, req.ref_id)
 
@@ -912,7 +915,28 @@ class Api:
         return models.DreamboothModelTrainingResponse(
             status="OK",
             msg="OK",
-            data={},
+            data={"images": images},
+        )
+
+    def train_dreambooth_v2(self, req: models.DreamboothModelTrainingRequest):
+        ''' Stage 1: Record model and prepare inputs'''
+        '''Update status in Firebase to be `processing`'''
+        self.record_model_init(req.ref_id)
+        ''' 1. Upload images to S3'''
+        images = self.upload_images(ref=req.ref_id, images=req.images)
+        ''' 2. Prepare dataset on local'''
+        tmp_dir = self.prepare_local_images(req.images, req.ref_id)
+
+        '''   2.2 Train model and then store on S3'''
+        trainer = DreamboothModelTrainerV2()
+        x = threading.Thread(target=trainer.train, args=(req.ref_id, req.model_name, tmp_dir,))
+        x.start()
+
+        ''' Stage 2: Training on the prepared inputs''' 
+        return models.DreamboothModelTrainingResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
         )
 
     def _random_seed(self):
@@ -930,6 +954,57 @@ class Api:
         param.batch_size = req.batch_size
         param.override_settings: {
             "sd_model_checkpoint": "majicmixRealistic_v7.safetensors [7c819b6d13]"
+        }
+
+        ''' Generate images '''
+        response = self.text2imgapi(txt2imgreq=param)
+        response = json.loads(response.json())
+
+        # Store images on S3
+        idx = 0
+        images = []
+        if "images" in response:
+            for idx in range(len(response["images"])):
+                filename = "{}_{}.png".format(req.ref_id, str(idx).zfill(5))
+                s3_url = S3Storage.upload(
+                    prefix=req.ref_id,
+                    filename=filename,
+                    filetype=FileType.output,
+                    base64content=response["images"][idx],
+                )
+                images.append(s3_url)
+        else:
+            print(f"⭕ Error: cannot get images")
+
+        # Return images URL
+        return models.LoraApiResponse(
+            status="OK",
+            msg="OK",
+            data={"images": images},
+        )
+
+    def dreambooth_text2imgapi(self, req: models.DreamboothText2ImageRequest):
+        # Retrieve trained Dreambooth model 
+        model_filename = req.model_path.split("/")[-1:][0]
+
+        response = requests.get("https://mestyle.milodads.xyz/sdapi/v1/sd-models")
+        response = response.json()
+
+        model_checkpoint = "db-atd-candle.safetensors [fb351a5ded]"
+        # for model in response:
+        #     if "{}".format(model["title"]).startswith(model_filename):
+        #         print(" > Found:", model["title"])
+        #         model_checkpoint = model["title"]
+        #         break
+
+        # Prompt engineering
+        param = models.StableDiffusionTxt2ImgProcessingAPI()
+        param.prompt = req.original_prompt.replace("scented candle", "<atd> scented candle")
+        param.negative_prompt = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,"
+        param.seed = self._random_seed()
+        param.batch_size = req.batch_size
+        param.override_settings: {
+            "sd_model_checkpoint": model_checkpoint,
         }
 
         ''' Generate images '''

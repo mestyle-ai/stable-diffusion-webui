@@ -163,6 +163,17 @@ class DreamboothModelTrainingResponse(BaseModel):
     msg: str
     data: dict
 
+class DreamboothText2ImageRequest(BaseModel):
+    original_prompt: str
+    model_path: str
+    batch_size: int
+    ref_id: str
+
+class DreamboothApiResponse(BaseModel):
+    status: str
+    msg: str
+    data: dict
+
 class TextToImageResponse(BaseModel):
     images: list[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
     parameters: dict
